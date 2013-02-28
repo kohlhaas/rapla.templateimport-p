@@ -430,7 +430,7 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent
 	 private void confirmImport(final Component parentComponent, final String[] header, final List<Entry> entries) throws RaplaException {
          Object[][] tableContent = new Object[entries.size()][header.length+2];
          
-         DynamicType[] dynamicTypes = getQuery().getDynamicTypes(DynamicTypeAnnotations.VALUE_RESERVATION_CLASSIFICATION);
+         DynamicType[] dynamicTypes = getQuery().getDynamicTypes(DynamicTypeAnnotations.VALUE_CLASSIFICATION_TYPE_RESERVATION);
          for (int i = 0; i < entries.size(); i++)
          { 	 
         	 Entry row = entries.get(i);
