@@ -14,7 +14,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import javax.servlet.ServletException;
 import javax.swing.JMenuItem;
 import javax.swing.SwingUtilities;
 
@@ -39,10 +38,10 @@ import org.rapla.framework.RaplaContext;
 import org.rapla.framework.RaplaException;
 import org.rapla.framework.StartupEnvironment;
 import org.rapla.gui.CalendarModel;
+import org.rapla.gui.CalendarSelectionModel;
 import org.rapla.gui.MenuExtensionPoint;
 import org.rapla.gui.RaplaGUIComponent;
 import org.rapla.gui.internal.RaplaStartOption;
-import org.rapla.gui.internal.common.CalendarSelectionModel;
 import org.rapla.gui.toolkit.DialogUI;
 import org.rapla.plugin.RaplaExtensionPoints;
 import org.rapla.plugin.tableview.internal.AppointmentTableViewFactory;
@@ -103,7 +102,7 @@ public class DBExportPluginInitializer extends RaplaGUIComponent
         return item;
     }
     
-    public void export(final CalendarModel model) throws IOException, ServletException, RaplaException
+    public void export(final CalendarModel model) throws IOException,  RaplaException
     {
     	SEPARATOR = getQuery().getPreferences(getUser()).getEntryAsString( DBExportOption.separator_CONFIG,DBExportOption.SEPARATOR_SEMICOLON);
     	decimalpoint = getQuery().getPreferences(getUser()).getEntryAsString( DBExportOption.decimalpoint_CONFIG,DBExportOption.DECIMAL_POINT);
@@ -273,7 +272,7 @@ public class DBExportPluginInitializer extends RaplaGUIComponent
 	    }
      
 	
-	private List<AppointmentBlock> getBlocksForRequest(CalendarModel model) throws ServletException, RaplaException {
+	private List<AppointmentBlock> getBlocksForRequest(CalendarModel model) throws  RaplaException {
 
 		startDate = model.getStartDate();
 		endDate = model.getEndDate();
