@@ -18,6 +18,13 @@ import org.rapla.framework.Container;
 import org.rapla.framework.PluginDescriptor;
 import org.rapla.plugin.RaplaExtensionPoints;
 import org.rapla.plugin.RaplaPluginMetaInfo;
+import org.rapla.plugin.export2ical.Export2iCalChangeWatcher;
+import org.rapla.plugin.export2ical.Export2iCalServlet;
+import org.rapla.plugin.export2ical.ICalExport;
+import org.rapla.plugin.export2ical.RaplaICalExport;
+import org.rapla.plugin.export2ical.icalimport.ICalImport;
+import org.rapla.plugin.export2ical.icalimport.RaplaICalImport;
+import org.rapla.server.ServerService;
 
 // Plugin will be available in the 1.7 release
 public class ImportTemplatePlugin  implements PluginDescriptor
@@ -38,7 +45,13 @@ public class ImportTemplatePlugin  implements PluginDescriptor
         	return;
 
         container.addContainerProvidedComponent( I18nBundle.ROLE, I18nBundleImpl.class.getName(), RESOURCE_FILE,I18nBundleImpl.createConfig( RESOURCE_FILE ) );
-        container.addContainerProvidedComponent( RaplaExtensionPoints.CLIENT_EXTENSION, ImportTemplatePluginInitializer.class.getName(), PLUGIN_CLASS, config);
+        if ( container.getContext().has( ServerService.ROLE) ){
+            container.addContainerProvidedComponent(TemplateImport.class.getName(), RaplaTemplateImport.class.getName(), RaplaTemplateImport.class.getName(),config);
+        } 
+        else
+        {
+            container.addContainerProvidedComponent( RaplaExtensionPoints.CLIENT_EXTENSION, ImportTemplatePluginInitializer.class.getName(), PLUGIN_CLASS, config);
+        }
         //container.addContainerProvidedComponent( RaplaExtensionPoints.USER_OPTION_PANEL_EXTENSION, MyOption.class.getName(),PLUGIN_CLASS, config);
 
         

@@ -18,13 +18,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.StringReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
@@ -42,6 +42,7 @@ import javax.swing.table.TableColumn;
 import org.rapla.components.iolayer.FileContent;
 import org.rapla.components.iolayer.IOInterface;
 import org.rapla.components.util.DateTools;
+import org.rapla.components.util.SerializableDateTimeFormat;
 import org.rapla.entities.User;
 import org.rapla.entities.domain.Appointment;
 import org.rapla.entities.domain.Repeating;
@@ -67,8 +68,6 @@ import org.supercsv.prefs.CsvPreference;
 
 public class ImportTemplatePluginInitializer extends RaplaGUIComponent
 {
-
-
 	public ImportTemplatePluginInitializer(RaplaContext sm) throws RaplaException {
         super(sm);
         //MenuExtensionPoint helpMenu = (MenuExtensionPoint) getService( RaplaExtensionPoints.HELP_MENU_EXTENSION_POINT);
@@ -88,46 +87,68 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent
         JMenuItem item = new JMenuItem( "events into templates" );
         item.setIcon( getIcon("icon.import") );
         item.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent evt) {
-                    try {
-                        final Frame frame = (Frame) SwingUtilities.getRoot(getMainComponent());
+            public void actionPerformed(ActionEvent evt) {
+                try {
+                    Reader reader = null;
+                    TemplateImport importService = null;
+                    try
+                    {
+                        importService = getWebservice( TemplateImport.class);
+                    }
+                    catch (Exception ex)
+                    {
+                        
+                    }
+                    final Frame frame = (Frame) SwingUtilities.getRoot(getMainComponent());
+                    if ( importService != null && importService.hasDBConnection())
+                    {
+                        reader = new StringReader( importService.importFromServer());
+                    }
+                    else
+                    {
                         IOInterface io =  getService( IOInterface.class);
                         FileContent file = io.openFile( frame, null, new String[] {".csv"});
                         if ( file != null) 
                         {
-                            Reader reader = new InputStreamReader( file.getInputStream());
-                            ICsvMapReader mapReader = null;
-                            List<Entry> list=new ArrayList<Entry>();
-                            try {
-                                    mapReader = new CsvMapReader(reader, CsvPreference.STANDARD_PREFERENCE);
-                                    
-                                    // the header columns are used as the keys to the Map
-                                    final String[] header = mapReader.getHeader(true);
-                                    final CellProcessor[] processors = new CellProcessor[header.length];
-                                    for ( int i=0;i<processors.length;i++)
-                                    {
-                                    	processors[i]= new Optional();
-                                    }
-                                    
-                                    Map<String, Object> customerMap;
-                                    while( (customerMap = mapReader.read(header, processors)) != null ) 
-                                    {
-                                    	 list.add(new Entry(customerMap));
-                                    }
-                                    confirmImport(frame, header, list);
-                                    
-                            }
-                            finally {
-                                    if( mapReader != null ) {
-                                            mapReader.close();
-                                    }
-                            }
+                            reader = new InputStreamReader( file.getInputStream());
                             //String[][] entries = Tools.csvRead( reader, ',',1 ); // read first 5 colums per input row and store in memory
                         }
-                     } catch (Exception ex) {
-                        showException( ex, getMainComponent() );
+                        
                     }
+                    
+                    if ( reader != null)
+                    {
+                        ICsvMapReader mapReader = null;
+                        List<Entry> list=new ArrayList<Entry>();
+                        try {
+                            mapReader = new CsvMapReader(reader, CsvPreference.STANDARD_PREFERENCE);
+                            
+                            // the header columns are used as the keys to the Map
+                            final String[] header = mapReader.getHeader(true);
+                            final CellProcessor[] processors = new CellProcessor[header.length];
+                            for ( int i=0;i<processors.length;i++)
+                            {
+                                processors[i]= new Optional();
+                            }
+                            
+                            Map<String, Object> customerMap;
+                            while( (customerMap = mapReader.read(header, processors)) != null ) 
+                            {
+                                 list.add(new Entry(customerMap));
+                            }
+                            confirmImport(frame, header, list);
+                        }
+                        finally {
+                            if( mapReader != null ) {
+                                mapReader.close();
+                            }
+                        }
+                    }
+                    
+                 } catch (Exception ex) {
+                    showException( ex, getMainComponent() );
                 }
+            }
         });
         return item;
     }
@@ -154,19 +175,24 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent
 	        return jComboBox;
 	    }
 	}
-
     
     class Template
     {
-    	public Reservation[] reservations;
-    	public Template(Reservation[] reservations)
+    	public List<Reservation> reservations;
+    	public Template(List<Reservation> reservations)
     	{
     		this.reservations = reservations;
     	}
     	
     	public String toString()
     	{
-    		return reservations[0].getName( getLocale());
+    		String name = reservations.get(0).getName( getLocale());
+            if  (reservations.size() > 1)
+            {
+                name += " ("+ reservations.size() + " " + getString("reservations") + ")"; 
+            }
+            return name;
+            
     	}
     };
     
@@ -180,28 +206,45 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent
     	datum_fehlt, datum_fehlerhaft, aktuell
     }
 
-    private static final String PRIMARY_KEY = "SeminarNr";
+    private static final String PRIMARY_KEY = "Seminarnummer";
     private static final String TEMPLATE_KEY = "TitelID";
+    private static final String BEGIN_KEY = "DatumVon";
+    private static final String STORNO_KEY = "StorniertAm";
     
     class Entry
     {
-    	Map<String, Object> entries;
-		public Reservation[] reservations;
-		Template template;
+    	private Map<String, Object> entries;
+    	private List<Reservation> reservations = new ArrayList<Reservation>();
+		private Template template;
+		
 		
     	public Entry(Map<String, Object> entries) {
     		this.entries = entries;
     	}
 
+    	public void setReservations( List<Reservation> events)
+    	{
+    	    this.reservations = events;
+    	}
     	
     	public Date getBeginn() throws ParseException
     	{
-    		String dateString = (String)entries.get("DatumVon");
+            String dateString = (String)entries.get(BEGIN_KEY);
     		if (dateString != null)
     		{
-    			SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy");
-    			format.setTimeZone( DateTools.getTimeZone());
-    			Date parse = format.parse( dateString);
+    		    Date parse;
+    		    try
+    		    {
+        		    SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy");
+        			format.setTimeZone( DateTools.getTimeZone());
+        			parse = format.parse( dateString);
+    		    }
+    		    catch (ParseException ex)
+    		    {
+    		        SerializableDateTimeFormat format = new SerializableDateTimeFormat( getRaplaLocale().createCalendar());
+                    boolean fillDate = false;
+    		        parse = format.parseDate( dateString, fillDate);
+    		    }
 				return parse;
     		}
     		return null;
@@ -214,7 +257,7 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent
        	
        	public boolean isStorno()
        	{
-       		String string = (String)entries.get("StorniertAm");
+            String string = (String)entries.get(STORNO_KEY);
        		if ( string != null && string.trim().length() > 0)
        		{
        			return true;
@@ -222,10 +265,9 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent
        		return false;
        	}
 
-
 		public Status getStatus() 
 		{
-			boolean hasReservations = reservations != null && reservations.length >0;
+			boolean hasReservations = reservations != null && reservations.size() >0;
 			boolean hasTemplates = template != null;
 			try {
 				if ( getBeginn() == null)
@@ -265,9 +307,7 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent
 			{
 				return Status.template_waehlen;
 			}
-			
 		}
-
 
 		public void process() throws ParseException, RaplaException {
 			Status status =getStatus();
@@ -281,30 +321,28 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent
 			}
 		}
 
-
-		private void remove(Reservation[] reservations) throws RaplaException 
+		private void remove(List<Reservation> reservations) throws RaplaException 
 		{
-			getModification().removeObjects( reservations);
+			getModification().removeObjects( reservations.toArray( Reservation.RESERVATION_ARRAY));
 		}
 
 
-		private Reservation[] copy(Template template2, Date beginn) throws RaplaException 
+		private List<Reservation> copy(Template template2, Date beginn) throws RaplaException 
 		{
-			Reservation[] toCopy = template2.reservations;
-		     List<Reservation> sortedReservations = new ArrayList<Reservation>( Arrays.asList( toCopy));
-		     Collections.sort( sortedReservations, new ReservationStartComparator(getLocale()));
-		     Collection<Reservation> copies = new ArrayList<Reservation>();
-		     Date firstStart = null;
-		     for (Reservation reservation: sortedReservations) {
-		    	 if ( firstStart == null )
-		    	 {
-		    		 firstStart = ReservationStartComparator.getStart( reservation);
-		    	 }
-		    	 Reservation copy = copy(reservation, beginn, firstStart);
-		    	 copies.add( copy);
-		     }
-		    
-			return copies.toArray(Reservation.RESERVATION_ARRAY);
+			List<Reservation> toCopy = template2.reservations;
+			List<Reservation> sortedReservations = new ArrayList<Reservation>(  toCopy);
+			Collections.sort( sortedReservations, new ReservationStartComparator(getLocale()));
+			List<Reservation> copies = new ArrayList<Reservation>();
+			Date firstStart = null;
+			for (Reservation reservation: sortedReservations) {
+			    if ( firstStart == null )
+			    {
+			        firstStart = ReservationStartComparator.getStart( reservation);
+			    }
+			    Reservation copy = copy(reservation, beginn, firstStart);
+			    copies.add( copy);
+			}
+			return copies;
 		}
 		
 		public Reservation copy(Reservation reservation, Date destStart,Date firstStart) throws RaplaException {
@@ -350,7 +388,7 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent
 		}
 
 
-		private void map(Reservation[] reservations2,Map<String, Object> entries2) throws RaplaException 
+		private void map(List<Reservation> reservations2,Map<String, Object> entries2) throws RaplaException 
 		{
 			ArrayList<Reservation> toStore = new ArrayList<Reservation>();
 			for (Reservation r: reservations2)
@@ -385,7 +423,7 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent
 			}
 		}
 		
-		public boolean needsUpdate(Reservation[] events, Map<String, Object> entries2) {
+		private boolean needsUpdate(List<Reservation> events, Map<String, Object> entries2) {
 			for ( Reservation r:events)
 			{
 				if ( needsUpdate( r.getClassification(), entries2))
@@ -396,7 +434,7 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent
 			return false;
 		}
 		
-		public boolean needsUpdate(Classification c, Map<String, Object> entries2) {
+		private boolean needsUpdate(Classification c, Map<String, Object> entries2) {
 			for (Map.Entry<String, Object> e: entries.entrySet())
 			{
 				String key = e.getKey();
@@ -424,100 +462,112 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent
 			}
 			return false;
 		}
+
+        public List<Reservation> getReservations() {
+            return reservations;
+        }
 		
     }
     
 	 private void confirmImport(final Component parentComponent, final String[] header, final List<Entry> entries) throws RaplaException {
          Object[][] tableContent = new Object[entries.size()][header.length+2];
          
+         
+         User user = null;
+         Date start=getQuery().today();
+         Date end = null;
+         Map<String,List<Reservation>> keyMap = new LinkedHashMap<String, List<Reservation>>();
+
          DynamicType[] dynamicTypes = getQuery().getDynamicTypes(DynamicTypeAnnotations.VALUE_CLASSIFICATION_TYPE_RESERVATION);
+         {
+             List<ClassificationFilter> filters = new ArrayList<ClassificationFilter>();
+             for (DynamicType type:dynamicTypes)
+             {
+                if (type.getAttribute(PRIMARY_KEY) != null ) 
+                {
+                    ClassificationFilter filter = type.newClassificationFilter();
+                    //filter.addEqualsRule(PRIMARY_KEY, primaryKey);
+                    filters.add( filter);
+                }
+             }
+             Reservation[] reservations = getQuery().getReservations(user, start, end, filters.toArray(ClassificationFilter.CLASSIFICATIONFILTER_ARRAY));
+             
+             for ( Reservation r:reservations)
+             {
+                 Object key = r.getClassification().getValue(PRIMARY_KEY);
+                 if  ( key != null )
+                 {
+                     String string = key.toString();
+                     List<Reservation> list = keyMap.get( string);
+                     if ( list == null)
+                     {
+                         list = new ArrayList<Reservation>();
+                         keyMap.put( string, list);
+                     }
+                     list.add( r);
+                 }
+             }
+         }
+         Map<String,List<Reservation>> templateMap = new LinkedHashMap<String, List<Reservation>>();
+         {
+             List<ClassificationFilter> filters = new ArrayList<ClassificationFilter>();
+             for (DynamicType type:dynamicTypes)
+             {
+                if (type.getAttribute(PRIMARY_KEY) != null && type.getAttribute(TEMPLATE_KEY) != null)
+                {
+                    ClassificationFilter filter = type.newClassificationFilter();
+                    filter.addRule(PRIMARY_KEY, new Object[][] {{"=",null},{"=",""}});
+                    filters.add( filter);
+                }
+             }
+             Reservation[] reservations = getQuery().getReservations(user, start, end, filters.toArray(ClassificationFilter.CLASSIFICATIONFILTER_ARRAY));
+             
+             for ( Reservation r:reservations)
+             {
+                 Object key = r.getClassification().getValue(TEMPLATE_KEY);
+                 if  ( key != null && key.toString().length() > 0 )
+                 {
+                     String string = key.toString();
+                     List<Reservation> list = templateMap.get( string);
+                     if ( list == null)
+                     {
+                         list = new ArrayList<Reservation>();
+                         templateMap.put( string, list);
+                     }
+                     list.add( r);
+                 }
+             }
+         }
+
          for (int i = 0; i < entries.size(); i++)
          { 	 
         	 Entry row = entries.get(i);
         	 {
         		 String primaryKey = (String) row.get(PRIMARY_KEY);
-	        	 List<ClassificationFilter> filters = new ArrayList<ClassificationFilter>();
-	        	 for (DynamicType type:dynamicTypes)
-	        	 {
-	 				if (type.getAttribute(PRIMARY_KEY) != null ) 
-	 				{
-	 					ClassificationFilter filter = type.newClassificationFilter();
-	 					filter.addEqualsRule(PRIMARY_KEY, primaryKey);
-	 					filters.add( filter);
-	 				}
-	        	 }
-	        	 User user = null;
-	        	 Date start=null;
-	        	 Date end = null;
-	         
-	        	 Reservation[] reservations = getQuery().getReservations(user, start, end, filters.toArray(ClassificationFilter.CLASSIFICATIONFILTER_ARRAY));
-	        	 row.reservations = reservations;
+        		 List<Reservation> events = keyMap.get( primaryKey);
+        		 if ( events != null)
+        		 {
+        		     row.setReservations(events);
+        		 }
         	 }
-        	 if ( row.reservations.length == 0)
+        	 if ( row.getReservations().size() == 0)
         	 {
-            	 {
-            		 String primaryKey = (String) row.get(TEMPLATE_KEY);
-    	        	 List<ClassificationFilter> filters = new ArrayList<ClassificationFilter>();
-    	        	 for (DynamicType type:dynamicTypes)
-    	        	 {
-    	        		 if (type.getAttribute(PRIMARY_KEY) != null && type.getAttribute(TEMPLATE_KEY) != null ) 
-    	        		 {
-    	        			 {
-    	        				 ClassificationFilter filter = type.newClassificationFilter();
-    	        				 filter.addEqualsRule(PRIMARY_KEY, "");
-    	        				 filter.addEqualsRule(PRIMARY_KEY, null);
-    	        				 filters.add( filter);
-    	        			 }
-    	        			 {
-    	        				 ClassificationFilter filter = type.newClassificationFilter();
-    	        				 filter.addEqualsRule(TEMPLATE_KEY, primaryKey);
-    	        				 filters.add( filter);
-    	        			 }
-    	 				}
-    	        	 }
-    	        	 User user = null;
-    	        	 Date start=null;
-    	        	 Date end = null;
-    	         
-    	        	 Reservation[] reservations = getQuery().getReservations(user, start, end, filters.toArray(ClassificationFilter.CLASSIFICATIONFILTER_ARRAY));
-    	        	 if ( reservations.length >0 )
-    	        	 {
-    	        		 row.template = new Template(reservations);
-    	        	 } 
-            	 }
+        		 String key = (String) row.get(TEMPLATE_KEY);
+        		 List<Reservation> events = templateMap.get( key);
+                  
+        		 if ( events != null)
+	        	 {
+	        		 row.template = new Template(events);
+	        	 } 
         	 }
     	 }
         	
          List<Template> templateList = new ArrayList<ImportTemplatePluginInitializer.Template>();
-    	 {
-        	 List<ClassificationFilter> filters = new ArrayList<ClassificationFilter>();
-        	 for (DynamicType type:dynamicTypes)
-        	 {
-        		 if (type.getAttribute(PRIMARY_KEY) != null && type.getAttribute(TEMPLATE_KEY) != null ) 
-        		 {
-        			 {
-        				 ClassificationFilter filter = type.newClassificationFilter();
-        				 filter.addEqualsRule(PRIMARY_KEY, "");
-        				 filter.addEqualsRule(PRIMARY_KEY, null);
-        				 filters.add( filter);
-        			 }
-        			 {
-        				 ClassificationFilter filter = type.newClassificationFilter();
-        				 filter.addEqualsRule(TEMPLATE_KEY, "-1");
-        				 filters.add( filter);
-        			 }
- 				}
-        	 }
-        	 User user = null;
-        	 Date start=null;
-        	 Date end = null;
-         
-        	 Reservation[] reservations = getQuery().getReservations(user, start, end, filters.toArray(ClassificationFilter.CLASSIFICATIONFILTER_ARRAY));
-        	 for (Reservation event:reservations)
-        	 {
-        		 Template template = new Template( new Reservation[] {event});
-        		 templateList.add( template );
-        	 }
+         for ( Map.Entry<String, List<Reservation>> entry: templateMap.entrySet())
+         {
+             List<Reservation> values = entry.getValue();
+             Template template = new Template( values);
+             templateList.add( template );
     	 }
          for (int i = 0; i < entries.size(); i++)
          { 	 
@@ -556,13 +606,14 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent
         	} 
          };
          table.setModel(dataModel);
-         table.getColumnModel().getColumn( header.length).setMinWidth(120);
+         table.getColumnModel().getColumn( header.length).setMinWidth(150);
          {
         	 TableColumn templateColumn = table.getColumnModel().getColumn( header.length+1);
-        	 templateColumn.setMinWidth(120);
+        	 templateColumn.setMinWidth(300);
         	 templateColumn.setCellEditor( new JIDCellEditor(templateList));
          }
-         JScrollPane pane = new JScrollPane(table);
+         JScrollPane pane = new JScrollPane(table,JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+         //pane.setPreferredSize( new Dimension(2000,800));
 		 DialogUI dialog2 = DialogUI.create(
                  getContext()
                  ,parentComponent
@@ -570,8 +621,7 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent
                  ,pane
                  ,new String[] {getString("ok"),getString("back")}
         );
-		 pane.setPreferredSize(new Dimension(900, 600));
-         dialog2.setIcon(getIcon("icon.info"));
+		 pane.setPreferredSize(new Dimension(1024, 700));
          dialog2.setDefault(0);
          dialog2.start();
          if (dialog2.getSelectedIndex() == 0)
