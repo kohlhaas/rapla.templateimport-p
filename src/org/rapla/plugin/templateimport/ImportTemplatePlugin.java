@@ -46,7 +46,7 @@ public class ImportTemplatePlugin  implements PluginDescriptor
 
         container.addContainerProvidedComponent( I18nBundle.ROLE, I18nBundleImpl.class.getName(), RESOURCE_FILE,I18nBundleImpl.createConfig( RESOURCE_FILE ) );
         if ( container.getContext().has( ServerService.ROLE) ){
-            container.addContainerProvidedComponent(TemplateImport.class.getName(), RaplaTemplateImport.class.getName(), RaplaTemplateImport.class.getName(),config);
+            container.addContainerProvidedComponent(RaplaExtensionPoints.REMOTE_METHOD_FACTORY, RaplaTemplateImport.class.getName(), RaplaTemplateImport.class.getName(),config);
         } 
         else
         {

@@ -14,6 +14,8 @@ import org.rapla.components.util.SerializableDateTimeFormat;
 import org.rapla.facade.RaplaComponent;
 import org.rapla.framework.RaplaContext;
 import org.rapla.framework.RaplaException;
+import org.rapla.server.RemoteMethodFactory;
+import org.rapla.server.RemoteSession;
 import org.rapla.storage.StorageOperator;
 import org.rapla.storage.dbsql.DBOperator;
 import org.supercsv.cellprocessor.Optional;
@@ -22,7 +24,7 @@ import org.supercsv.io.CsvMapWriter;
 import org.supercsv.prefs.CsvPreference;
 
 
-public class RaplaTemplateImport extends RaplaComponent implements TemplateImport {
+public class RaplaTemplateImport extends RaplaComponent implements RemoteMethodFactory<TemplateImport> , TemplateImport{
 
     public RaplaTemplateImport(RaplaContext context) {
         super(context);
@@ -142,6 +144,10 @@ public class RaplaTemplateImport extends RaplaComponent implements TemplateImpor
         }
         
         return false;
+    }
+
+    public TemplateImport createService(RemoteSession remoteSession) {
+        return this;
     }
 
 }
