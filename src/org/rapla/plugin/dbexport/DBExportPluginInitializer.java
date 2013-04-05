@@ -43,11 +43,12 @@ import org.rapla.gui.MenuExtensionPoint;
 import org.rapla.gui.RaplaGUIComponent;
 import org.rapla.gui.internal.RaplaStartOption;
 import org.rapla.gui.toolkit.DialogUI;
+import org.rapla.plugin.ClientExtension;
 import org.rapla.plugin.RaplaExtensionPoints;
 import org.rapla.plugin.tableview.internal.AppointmentTableViewFactory;
 import org.rapla.plugin.tableview.internal.ReservationTableViewFactory;
 
-public class DBExportPluginInitializer extends RaplaGUIComponent
+public class DBExportPluginInitializer extends RaplaGUIComponent implements ClientExtension
 {
 	
 	String QUOTEBEFORE = "";
@@ -64,7 +65,7 @@ public class DBExportPluginInitializer extends RaplaGUIComponent
 	boolean webstartEnabled = false;
 	Category superCategory = getQuery().getSuperCategory();
 	ClassificationFilter[] exportCriteria;
-	CalendarModel model = ((CalendarModel)getContext().lookup(CalendarModel.class.getName()));
+	CalendarModel model = getContext().lookup(CalendarModel.class);
 	Reservation reservation;
 	// temp fixing
 	String srcTable;
@@ -81,9 +82,9 @@ public class DBExportPluginInitializer extends RaplaGUIComponent
 	public DBExportPluginInitializer(RaplaContext sm) throws RaplaException {
         super(sm);
         setChildBundleName( DBExportPlugin.RESOURCE_FILE);
-        MenuExtensionPoint export = (MenuExtensionPoint) getService( RaplaExtensionPoints.EXPORT_MENU_EXTENSION_POINT);
+        MenuExtensionPoint export = getService(RaplaExtensionPoints.EXPORT_MENU_EXTENSION_POINT);
         export.insert(createExportMenu() );
-        webstartEnabled =((StartupEnvironment)getContext().lookup(StartupEnvironment.class.getName())).getStartupMode() == StartupEnvironment.WEBSTART;
+        webstartEnabled =getContext().lookup(StartupEnvironment.class).getStartupMode() == StartupEnvironment.WEBSTART;
     }
 
     private JMenuItem createExportMenu( )  {
@@ -231,7 +232,7 @@ public class DBExportPluginInitializer extends RaplaGUIComponent
 
 	public void saveFile(byte[] content,String filename, String extension, final Component parentComponent) throws RaplaException {
 		final Frame frame = (Frame) SwingUtilities.getRoot(getMainComponent());
-		IOInterface io = (IOInterface) getService( IOInterface.class.getName());
+		IOInterface io =  getService( IOInterface.class);
 		String path = null;
 		try {
 			path = io.saveFile( frame, null, new String[] {extension}, filename, content);

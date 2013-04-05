@@ -58,6 +58,7 @@ import org.rapla.framework.RaplaException;
 import org.rapla.gui.MenuExtensionPoint;
 import org.rapla.gui.RaplaGUIComponent;
 import org.rapla.gui.toolkit.DialogUI;
+import org.rapla.plugin.ClientExtension;
 import org.rapla.plugin.RaplaExtensionPoints;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ift.CellProcessor;
@@ -66,20 +67,15 @@ import org.supercsv.io.ICsvMapReader;
 import org.supercsv.prefs.CsvPreference;
 
 
-public class ImportTemplatePluginInitializer extends RaplaGUIComponent
+public class ImportTemplatePluginInitializer extends RaplaGUIComponent implements ClientExtension
 {
 	public ImportTemplatePluginInitializer(RaplaContext sm) throws RaplaException {
         super(sm);
-        //MenuExtensionPoint helpMenu = (MenuExtensionPoint) getService( RaplaExtensionPoints.HELP_MENU_EXTENSION_POINT);
-        //helpMenu.insert(createInfoMenu() );
         if(!getUser().isAdmin())
         	return;
         setChildBundleName( ImportTemplatePlugin.RESOURCE_FILE);
-        MenuExtensionPoint importMenu = (MenuExtensionPoint) getService( RaplaExtensionPoints.IMPORT_MENU_EXTENSION_POINT);
+        MenuExtensionPoint importMenu =  getService( RaplaExtensionPoints.IMPORT_MENU_EXTENSION_POINT);
         importMenu.insert( createImportMenu());
-
-        //MenuExtensionPoint export = (MenuExtensionPoint) getService( RaplaExtensionPoints.EXPORT_MENU_EXTENSION_POINT);
-        //export.insert(createExportMenu() );
     }
 
 

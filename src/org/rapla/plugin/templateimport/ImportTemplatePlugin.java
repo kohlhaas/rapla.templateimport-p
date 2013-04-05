@@ -16,15 +16,12 @@ import org.rapla.components.xmlbundle.impl.I18nBundleImpl;
 import org.rapla.framework.Configuration;
 import org.rapla.framework.Container;
 import org.rapla.framework.PluginDescriptor;
+import org.rapla.framework.RaplaContext;
+import org.rapla.framework.RaplaContextException;
 import org.rapla.plugin.RaplaExtensionPoints;
 import org.rapla.plugin.RaplaPluginMetaInfo;
-import org.rapla.plugin.export2ical.Export2iCalChangeWatcher;
-import org.rapla.plugin.export2ical.Export2iCalServlet;
-import org.rapla.plugin.export2ical.ICalExport;
-import org.rapla.plugin.export2ical.RaplaICalExport;
-import org.rapla.plugin.export2ical.icalimport.ICalImport;
-import org.rapla.plugin.export2ical.icalimport.RaplaICalImport;
 import org.rapla.server.ServerService;
+import org.rapla.server.ServerServiceContainer;
 
 // Plugin will be available in the 1.7 release
 public class ImportTemplatePlugin  implements PluginDescriptor
@@ -38,19 +35,22 @@ public class ImportTemplatePlugin  implements PluginDescriptor
     }
 
     /**
+     * @throws RaplaContextException 
      * @see org.rapla.framework.PluginDescriptor#provideServices(org.rapla.framework.general.Container)
      */
-    public void provideServices(Container container, Configuration config) {
+    public void provideServices(Container container, Configuration config) throws RaplaContextException {
         if ( !config.getAttributeAsBoolean("enabled", ENABLE_BY_DEFAULT) )
         	return;
 
-        container.addContainerProvidedComponent( I18nBundle.ROLE, I18nBundleImpl.class.getName(), RESOURCE_FILE,I18nBundleImpl.createConfig( RESOURCE_FILE ) );
-        if ( container.getContext().has( ServerService.ROLE) ){
-            container.addContainerProvidedComponent(RaplaExtensionPoints.REMOTE_METHOD_FACTORY, RaplaTemplateImport.class.getName(), RaplaTemplateImport.class.getName(),config);
+        container.addContainerProvidedComponent( I18nBundle.class, I18nBundleImpl.class, RESOURCE_FILE,I18nBundleImpl.createConfig( RESOURCE_FILE ) );
+        RaplaContext context = container.getContext();
+        if ( context.has( ServerService.class) )
+        {
+            context.lookup( ServerServiceContainer.class).addRemoteMethodFactory(TemplateImport.class,RaplaTemplateImport.class);
         } 
         else
         {
-            container.addContainerProvidedComponent( RaplaExtensionPoints.CLIENT_EXTENSION, ImportTemplatePluginInitializer.class.getName(), PLUGIN_CLASS, config);
+            container.addContainerProvidedComponent( RaplaExtensionPoints.CLIENT_EXTENSION, ImportTemplatePluginInitializer.class);
         }
         //container.addContainerProvidedComponent( RaplaExtensionPoints.USER_OPTION_PANEL_EXTENSION, MyOption.class.getName(),PLUGIN_CLASS, config);
 

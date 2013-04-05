@@ -33,10 +33,10 @@ public class ListExportPlugin implements PluginDescriptor
     public void provideServices(Container container, Configuration config) {
         if ( !config.getAttributeAsBoolean("enabled", false) )
         	return;
-        container.addContainerProvidedComponent( I18nBundle.ROLE, I18nBundleImpl.class.getName(), RESOURCE_FILE,I18nBundleImpl.createConfig( RESOURCE_FILE ) );
-        container.addContainerProvidedComponent( RaplaExtensionPoints.CLIENT_EXTENSION, ListExportPluginInitializer.class.getName(), PLUGIN_CLASS, config);
+        container.addContainerProvidedComponent( I18nBundle.class, I18nBundleImpl.class, RESOURCE_FILE,I18nBundleImpl.createConfig( RESOURCE_FILE ) );
+        container.addContainerProvidedComponent( RaplaExtensionPoints.CLIENT_EXTENSION, ListExportPluginInitializer.class);
         //container.addContainerProvidedComponent( RaplaExtensionPoints.USER_OPTION_PANEL_EXTENSION, DBExportOption.class.getName(),PLUGIN_CLASS, config);
-        }
+    }
 
     public Object getPluginMetaInfos( String key )
     {

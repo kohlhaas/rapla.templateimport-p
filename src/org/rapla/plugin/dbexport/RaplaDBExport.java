@@ -92,7 +92,7 @@ public class RaplaDBExport  {
             StartupEnvironment env = new SimpleConnectorStartupEnvironment(  args[2], Integer.valueOf(args[3]), "/",false, logger);
             logger.info("URL: " + env.getDownloadURL());
             container = new RaplaMainContainer( env);
-            facade = (ClientFacade)container.getContext().lookup(ClientFacade.ROLE);
+            facade = container.getContext().lookup(ClientFacade.class);
             
             if ( facade.login(args[0], args[1].toCharArray() ) ) {
             	ClassificationFilter[] exportCriteria = new ClassificationFilter[1];
@@ -501,7 +501,7 @@ public class RaplaDBExport  {
         RaplaDefaultContext context = new RaplaDefaultContext();
         LocaleSelector localeSelector = new LocaleSelectorImpl();
         locale = localeSelector.getLocale();
-        context.put(LocaleSelector.ROLE,localeSelector);
+        context.put(LocaleSelector.class,localeSelector);
         i18n = new I18nBundleImpl(context,config,logger);
         return i18n;
     }

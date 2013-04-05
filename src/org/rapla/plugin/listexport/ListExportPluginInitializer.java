@@ -29,6 +29,7 @@ import javax.swing.SwingUtilities;
 import org.rapla.components.iolayer.IOInterface;
 import org.rapla.components.util.DateTools;
 import org.rapla.entities.Category;
+import org.rapla.entities.RaplaObject;
 import org.rapla.entities.domain.Allocatable;
 import org.rapla.entities.dynamictype.Attribute;
 import org.rapla.entities.dynamictype.AttributeType;
@@ -45,13 +46,13 @@ import org.rapla.framework.StartupEnvironment;
 import org.rapla.gui.MenuExtensionPoint;
 import org.rapla.gui.RaplaGUIComponent;
 import org.rapla.gui.toolkit.DialogUI;
+import org.rapla.plugin.ClientExtension;
 import org.rapla.plugin.RaplaExtensionPoints;
 import org.rapla.plugin.dbexport.DBExportOption;
 import org.rapla.plugin.dbexport.RaplaDBExport;
 
-public class ListExportPluginInitializer extends RaplaGUIComponent
+public class ListExportPluginInitializer extends RaplaGUIComponent implements ClientExtension
 {
-	
 	String QUOTEBEFORE = "";
 	String QUOTEAFTER = "";
 	
@@ -65,14 +66,14 @@ public class ListExportPluginInitializer extends RaplaGUIComponent
 	boolean webstartEnabled = false;
 	//Category superCategory = getQuery().getSuperCategory();
 	ClassificationFilter[] exportCriteria;
-    CalendarModel model = ((CalendarModel)getContext().lookup(CalendarModel.class.getName()));
+    CalendarModel model = getContext().lookup(CalendarModel.class);
 
 	public ListExportPluginInitializer(RaplaContext sm) throws RaplaException {
         super(sm);
         setChildBundleName( ListExportPlugin.RESOURCE_FILE);
-        MenuExtensionPoint export = (MenuExtensionPoint) getService( RaplaExtensionPoints.EXPORT_MENU_EXTENSION_POINT);
+        MenuExtensionPoint export = getService( RaplaExtensionPoints.EXPORT_MENU_EXTENSION_POINT);
         export.insert(createExportMenu() );
-        webstartEnabled =((StartupEnvironment)getContext().lookup(StartupEnvironment.class.getName())).getStartupMode() == StartupEnvironment.WEBSTART;   
+        webstartEnabled =getContext().lookup(StartupEnvironment.class).getStartupMode() == StartupEnvironment.WEBSTART;   
     }
 
     private JMenuItem createExportMenu( )  {
@@ -104,11 +105,11 @@ public class ListExportPluginInitializer extends RaplaGUIComponent
     	QUOTEAFTER = QUOTEBEFORE = getQuery().getPreferences(getUser()).getEntryAsString( DBExportOption.quote_CONFIG,DBExportOption.QUOTE_NONE);
     	
     	// Pass request for treatment
-    	Collection selection = model.getSelectedObjects();
+    	Collection<RaplaObject> selection = model.getSelectedObjects();
 
     	StringBuffer out = new StringBuffer();
     	int exportCnt= 0;
-    	for(Iterator it = selection.iterator();it.hasNext();)
+    	for(Iterator<RaplaObject> it = selection.iterator();it.hasNext();)
         {
     		String tableName = null;
         	Object obj = it.next();
@@ -150,7 +151,7 @@ public class ListExportPluginInitializer extends RaplaGUIComponent
 
 	public void saveFile(String content,String filename, String extension, final Component parentComponent) throws RaplaException {
 		final Frame frame = (Frame) SwingUtilities.getRoot(getMainComponent());
-		IOInterface io = (IOInterface) getService( IOInterface.class.getName());
+		IOInterface io =  getService( IOInterface.class);
 		String path = null;
 		try {
 			path = io.saveFile( frame, null, new String[] {extension}, filename, content.getBytes());
