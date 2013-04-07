@@ -36,7 +36,7 @@
 	    <!-- The rapla-directories -->
 	    <property name="src.dir" value="${main.dir}/src" />
 	    <property name="build.dir" value="${main.dir}/build" />
-	    <property name="generated.dir" value="${main.dir}/generated-src"/>
+	    <property name="generated.dir" value="${build.dir}/generated-src"/>
 	    <property name="build.dest" value="${build.dir}/classes" />
     </target>
 
