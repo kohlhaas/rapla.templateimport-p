@@ -150,15 +150,12 @@ public class DBExportOption extends RaplaGUIComponent implements OptionPanel {
         		return;
         	
             if ( evt.getSource() == separator) {
-                ;
             }
 
             if ( evt.getSource() == decimalpoint) {
-                ;
             }
 
             if ( evt.getSource() == quote) {
-                ;
             }
         }
     }

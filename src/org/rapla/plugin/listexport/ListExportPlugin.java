@@ -16,11 +16,12 @@ import org.rapla.components.xmlbundle.impl.I18nBundleImpl;
 import org.rapla.framework.Configuration;
 import org.rapla.framework.Container;
 import org.rapla.framework.PluginDescriptor;
+import org.rapla.framework.TypedComponentRole;
 import org.rapla.plugin.RaplaExtensionPoints;
 
 public class ListExportPlugin implements PluginDescriptor
 {
-	public static final String RESOURCE_FILE = ListExportPlugin.class.getPackage().getName() + ".ListExportResources";
+	public static final TypedComponentRole<I18nBundle> RESOURCE_FILE = new TypedComponentRole<I18nBundle>(ListExportPlugin.class.getPackage().getName() + ".ListExportResources");
     public static final String PLUGIN_CLASS = ListExportPlugin.class.getName();
 
     public String toString() {
@@ -33,7 +34,7 @@ public class ListExportPlugin implements PluginDescriptor
     public void provideServices(Container container, Configuration config) {
         if ( !config.getAttributeAsBoolean("enabled", false) )
         	return;
-        container.addContainerProvidedComponent( I18nBundle.class, I18nBundleImpl.class, RESOURCE_FILE,I18nBundleImpl.createConfig( RESOURCE_FILE ) );
+        container.addContainerProvidedComponent( RESOURCE_FILE, I18nBundleImpl.class, I18nBundleImpl.createConfig( RESOURCE_FILE.getId() ) );
         container.addContainerProvidedComponent( RaplaExtensionPoints.CLIENT_EXTENSION, ListExportPluginInitializer.class);
         //container.addContainerProvidedComponent( RaplaExtensionPoints.USER_OPTION_PANEL_EXTENSION, DBExportOption.class.getName(),PLUGIN_CLASS, config);
     }

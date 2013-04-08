@@ -18,6 +18,7 @@ import org.rapla.framework.Container;
 import org.rapla.framework.PluginDescriptor;
 import org.rapla.framework.RaplaContext;
 import org.rapla.framework.RaplaContextException;
+import org.rapla.framework.TypedComponentRole;
 import org.rapla.plugin.RaplaExtensionPoints;
 import org.rapla.plugin.RaplaPluginMetaInfo;
 import org.rapla.server.ServerService;
@@ -26,7 +27,7 @@ import org.rapla.server.ServerServiceContainer;
 // Plugin will be available in the 1.7 release
 public class ImportTemplatePlugin  implements PluginDescriptor
 {
-	public static final String RESOURCE_FILE = ImportTemplatePlugin.class.getPackage().getName() + ".ImportTemplateResources";
+	public static final TypedComponentRole<I18nBundle> RESOURCE_FILE = new TypedComponentRole<I18nBundle>(ImportTemplatePlugin.class.getPackage().getName() + ".ImportTemplateResources");
     public static final String PLUGIN_CLASS = ImportTemplatePlugin.class.getName();
     static boolean ENABLE_BY_DEFAULT = false;
 
@@ -42,7 +43,7 @@ public class ImportTemplatePlugin  implements PluginDescriptor
         if ( !config.getAttributeAsBoolean("enabled", ENABLE_BY_DEFAULT) )
         	return;
 
-        container.addContainerProvidedComponent( I18nBundle.class, I18nBundleImpl.class, RESOURCE_FILE,I18nBundleImpl.createConfig( RESOURCE_FILE ) );
+        container.addContainerProvidedComponent( RESOURCE_FILE, I18nBundleImpl.class,I18nBundleImpl.createConfig( RESOURCE_FILE.getId() ) );
         RaplaContext context = container.getContext();
         if ( context.has( ServerService.class) )
         {

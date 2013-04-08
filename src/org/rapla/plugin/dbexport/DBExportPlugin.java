@@ -16,11 +16,12 @@ import org.rapla.components.xmlbundle.impl.I18nBundleImpl;
 import org.rapla.framework.Configuration;
 import org.rapla.framework.Container;
 import org.rapla.framework.PluginDescriptor;
+import org.rapla.framework.TypedComponentRole;
 import org.rapla.plugin.RaplaExtensionPoints;
 
 public class DBExportPlugin implements PluginDescriptor
 {
-	public static final String RESOURCE_FILE = DBExportPlugin.class.getPackage().getName() + ".DBExportResources";
+	public static final TypedComponentRole<I18nBundle> RESOURCE_FILE = new TypedComponentRole<I18nBundle>( DBExportPlugin.class.getPackage().getName() + ".DBExportResources");
 
     public String toString() {
         return "DB Export";
@@ -32,7 +33,7 @@ public class DBExportPlugin implements PluginDescriptor
     public void provideServices(Container container, Configuration config) {
         if ( !config.getAttributeAsBoolean("enabled", false) )
         	return;
-        container.addContainerProvidedComponent( I18nBundle.class, I18nBundleImpl.class, RESOURCE_FILE,I18nBundleImpl.createConfig( RESOURCE_FILE ) );
+        container.addContainerProvidedComponent( RESOURCE_FILE, I18nBundleImpl.class, I18nBundleImpl.createConfig( RESOURCE_FILE.getId() ) );
         container.addContainerProvidedComponent( RaplaExtensionPoints.CLIENT_EXTENSION, DBExportPluginInitializer.class);
         container.addContainerProvidedComponent( RaplaExtensionPoints.USER_OPTION_PANEL_EXTENSION, DBExportOption.class);
     }

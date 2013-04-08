@@ -190,7 +190,7 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent implement
             return name;
             
     	}
-    };
+    }
     
     enum Status
     {
@@ -309,7 +309,7 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent implement
 			Status status =getStatus();
 			switch (status )
 			{
-				case geloescht: ;break;
+				case geloescht: break;
 				case aktuallisieren: map(reservations, entries) ;
 						break;
 				case template: reservations= copy(template, getBeginn());map(reservations, entries) ;break;
