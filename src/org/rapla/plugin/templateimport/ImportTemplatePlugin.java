@@ -19,8 +19,7 @@ import org.rapla.framework.PluginDescriptor;
 import org.rapla.framework.RaplaContext;
 import org.rapla.framework.RaplaContextException;
 import org.rapla.framework.TypedComponentRole;
-import org.rapla.plugin.RaplaExtensionPoints;
-import org.rapla.plugin.RaplaPluginMetaInfo;
+import org.rapla.plugin.RaplaClientExtensionPoints;
 import org.rapla.server.ServerService;
 import org.rapla.server.ServerServiceContainer;
 
@@ -51,18 +50,11 @@ public class ImportTemplatePlugin  implements PluginDescriptor
         } 
         else
         {
-            container.addContainerProvidedComponent( RaplaExtensionPoints.CLIENT_EXTENSION, ImportTemplatePluginInitializer.class);
+            container.addContainerProvidedComponent( RaplaClientExtensionPoints.CLIENT_EXTENSION, ImportTemplatePluginInitializer.class);
         }
         //container.addContainerProvidedComponent( RaplaExtensionPoints.USER_OPTION_PANEL_EXTENSION, MyOption.class.getName(),PLUGIN_CLASS, config);
 
         
     }
 
-    public Object getPluginMetaInfos( String key )
-    {
-        if ( RaplaPluginMetaInfo.METAINFO_PLUGIN_ENABLED_BY_DEFAULT.equals( key )) {
-            return new Boolean( ENABLE_BY_DEFAULT );
-        }
-        return null;
-    }
 }

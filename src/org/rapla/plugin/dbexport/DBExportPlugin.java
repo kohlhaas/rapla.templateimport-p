@@ -17,7 +17,7 @@ import org.rapla.framework.Configuration;
 import org.rapla.framework.Container;
 import org.rapla.framework.PluginDescriptor;
 import org.rapla.framework.TypedComponentRole;
-import org.rapla.plugin.RaplaExtensionPoints;
+import org.rapla.plugin.RaplaClientExtensionPoints;
 
 public class DBExportPlugin implements PluginDescriptor
 {
@@ -34,8 +34,8 @@ public class DBExportPlugin implements PluginDescriptor
         if ( !config.getAttributeAsBoolean("enabled", false) )
         	return;
         container.addContainerProvidedComponent( RESOURCE_FILE, I18nBundleImpl.class, I18nBundleImpl.createConfig( RESOURCE_FILE.getId() ) );
-        container.addContainerProvidedComponent( RaplaExtensionPoints.CLIENT_EXTENSION, DBExportPluginInitializer.class);
-        container.addContainerProvidedComponent( RaplaExtensionPoints.USER_OPTION_PANEL_EXTENSION, DBExportOption.class);
+        container.addContainerProvidedComponent( RaplaClientExtensionPoints.CLIENT_EXTENSION, DBExportPluginInitializer.class);
+        container.addContainerProvidedComponent( RaplaClientExtensionPoints.USER_OPTION_PANEL_EXTENSION, DBExportOption.class);
     }
 
     public Object getPluginMetaInfos( String key )

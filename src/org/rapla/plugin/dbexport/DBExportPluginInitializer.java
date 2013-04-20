@@ -44,7 +44,7 @@ import org.rapla.gui.RaplaGUIComponent;
 import org.rapla.gui.internal.RaplaStartOption;
 import org.rapla.gui.toolkit.DialogUI;
 import org.rapla.plugin.ClientExtension;
-import org.rapla.plugin.RaplaExtensionPoints;
+import org.rapla.plugin.RaplaClientExtensionPoints;
 import org.rapla.plugin.tableview.internal.AppointmentTableViewFactory;
 import org.rapla.plugin.tableview.internal.ReservationTableViewFactory;
 
@@ -82,7 +82,7 @@ public class DBExportPluginInitializer extends RaplaGUIComponent implements Clie
 	public DBExportPluginInitializer(RaplaContext sm) throws RaplaException {
         super(sm);
         setChildBundleName( DBExportPlugin.RESOURCE_FILE);
-        MenuExtensionPoint export = getService(RaplaExtensionPoints.EXPORT_MENU_EXTENSION_POINT);
+        MenuExtensionPoint export = getService(RaplaClientExtensionPoints.EXPORT_MENU_EXTENSION_POINT);
         export.insert(createExportMenu() );
         webstartEnabled =getContext().lookup(StartupEnvironment.class).getStartupMode() == StartupEnvironment.WEBSTART;
     }
