@@ -1,4 +1,4 @@
-package org.rapla.plugin.templateimport;
+package org.rapla.plugin.templateimport.server;
 
 import java.io.StringWriter;
 import java.sql.Connection;
@@ -14,6 +14,7 @@ import org.rapla.components.util.SerializableDateTimeFormat;
 import org.rapla.facade.RaplaComponent;
 import org.rapla.framework.RaplaContext;
 import org.rapla.framework.RaplaException;
+import org.rapla.plugin.templateimport.TemplateImport;
 import org.rapla.server.RemoteMethodFactory;
 import org.rapla.server.RemoteSession;
 import org.rapla.storage.StorageOperator;

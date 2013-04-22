@@ -43,15 +43,13 @@ import org.rapla.facade.CalendarSelectionModel;
 import org.rapla.framework.RaplaContext;
 import org.rapla.framework.RaplaException;
 import org.rapla.framework.StartupEnvironment;
-import org.rapla.gui.MenuExtensionPoint;
 import org.rapla.gui.RaplaGUIComponent;
 import org.rapla.gui.toolkit.DialogUI;
-import org.rapla.plugin.ClientExtension;
-import org.rapla.plugin.RaplaClientExtensionPoints;
+import org.rapla.gui.toolkit.IdentifiableMenuEntry;
 import org.rapla.plugin.dbexport.DBExportOption;
 import org.rapla.plugin.dbexport.RaplaDBExport;
 
-public class ListExportPluginInitializer extends RaplaGUIComponent implements ClientExtension
+public class ListExportPluginInitializer extends RaplaGUIComponent implements IdentifiableMenuEntry, ActionListener
 {
 	String QUOTEBEFORE = "";
 	String QUOTEAFTER = "";
@@ -68,28 +66,34 @@ public class ListExportPluginInitializer extends RaplaGUIComponent implements Cl
 	ClassificationFilter[] exportCriteria;
     CalendarModel model = getContext().lookup(CalendarModel.class);
 
+    JMenuItem item;
+    String id = "list";
+    
 	public ListExportPluginInitializer(RaplaContext sm) throws RaplaException {
         super(sm);
         setChildBundleName( ListExportPlugin.RESOURCE_FILE);
-        MenuExtensionPoint export = getService( RaplaClientExtensionPoints.EXPORT_MENU_EXTENSION_POINT);
-        export.insert(createExportMenu() );
         webstartEnabled =getContext().lookup(StartupEnvironment.class).getStartupMode() == StartupEnvironment.WEBSTART;   
-    }
 
-    private JMenuItem createExportMenu( )  {
-        JMenuItem item = new JMenuItem( getString("list"));
+		item = new JMenuItem( getString(id));
         item.setIcon( getIcon("icon.list") );
-        item.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent evt) {
-                    try {
-                    	//if(isSelectionOK())
-                        	export( model, getMainComponent());
-                    } catch (Exception ex) {
-                        showException( ex, getMainComponent() );
-                    }
-                }
-        });
-        return item;
+        item.addActionListener(this);
+    }
+	
+	public String getId() {
+		return id;
+	}
+	
+	public JMenuItem getMenuElement() {
+		return item;
+	}
+	
+	public void actionPerformed(ActionEvent evt) {
+        try {
+        	//if(isSelectionOK())
+            	export( model, getMainComponent());
+        } catch (Exception ex) {
+            showException( ex, getMainComponent() );
+        }
     }
     
     public void export(final CalendarModel model,final Component parentComponent) throws IOException,  RaplaException

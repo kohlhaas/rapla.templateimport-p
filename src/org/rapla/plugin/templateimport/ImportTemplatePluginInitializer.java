@@ -55,11 +55,9 @@ import org.rapla.entities.dynamictype.DynamicType;
 import org.rapla.entities.dynamictype.DynamicTypeAnnotations;
 import org.rapla.framework.RaplaContext;
 import org.rapla.framework.RaplaException;
-import org.rapla.gui.MenuExtensionPoint;
 import org.rapla.gui.RaplaGUIComponent;
 import org.rapla.gui.toolkit.DialogUI;
-import org.rapla.plugin.ClientExtension;
-import org.rapla.plugin.RaplaClientExtensionPoints;
+import org.rapla.gui.toolkit.IdentifiableMenuEntry;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapReader;
@@ -67,88 +65,90 @@ import org.supercsv.io.ICsvMapReader;
 import org.supercsv.prefs.CsvPreference;
 
 
-public class ImportTemplatePluginInitializer extends RaplaGUIComponent implements ClientExtension
+public class ImportTemplatePluginInitializer extends RaplaGUIComponent implements IdentifiableMenuEntry,ActionListener
 {
+	String id = "events into templates";
+	JMenuItem item; 
 	public ImportTemplatePluginInitializer(RaplaContext sm) throws RaplaException {
         super(sm);
-        if(!getUser().isAdmin())
-        	return;
+       
         setChildBundleName( ImportTemplatePlugin.RESOURCE_FILE);
-        MenuExtensionPoint importMenu =  getService( RaplaClientExtensionPoints.IMPORT_MENU_EXTENSION_POINT);
-        importMenu.insert( createImportMenu());
-    }
-
-
-    private JMenuItem createImportMenu( ) {
-        JMenuItem item = new JMenuItem( "events into templates" );
+        
+		item = new JMenuItem( id );
         item.setIcon( getIcon("icon.import") );
-        item.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                try {
-                    Reader reader = null;
-                    TemplateImport importService = null;
-                    try
-                    {
-                        importService = getWebservice( TemplateImport.class);
-                    }
-                    catch (Exception ex)
-                    {
-                        
-                    }
-                    final Frame frame = (Frame) SwingUtilities.getRoot(getMainComponent());
-                    if ( importService != null && importService.hasDBConnection())
-                    {
-                        reader = new StringReader( importService.importFromServer());
-                    }
-                    else
-                    {
-                        IOInterface io =  getService( IOInterface.class);
-                        FileContent file = io.openFile( frame, null, new String[] {".csv"});
-                        if ( file != null) 
-                        {
-                            reader = new InputStreamReader( file.getInputStream());
-                            //String[][] entries = Tools.csvRead( reader, ',',1 ); // read first 5 colums per input row and store in memory
-                        }
-                        
-                    }
-                    
-                    if ( reader != null)
-                    {
-                        ICsvMapReader mapReader = null;
-                        List<Entry> list=new ArrayList<Entry>();
-                        try {
-                            mapReader = new CsvMapReader(reader, CsvPreference.STANDARD_PREFERENCE);
-                            
-                            // the header columns are used as the keys to the Map
-                            final String[] header = mapReader.getHeader(true);
-                            final CellProcessor[] processors = new CellProcessor[header.length];
-                            for ( int i=0;i<processors.length;i++)
-                            {
-                                processors[i]= new Optional();
-                            }
-                            
-                            Map<String, Object> customerMap;
-                            while( (customerMap = mapReader.read(header, processors)) != null ) 
-                            {
-                                 list.add(new Entry(customerMap));
-                            }
-                            confirmImport(frame, header, list);
-                        }
-                        finally {
-                            if( mapReader != null ) {
-                                mapReader.close();
-                            }
-                        }
-                    }
-                    
-                 } catch (Exception ex) {
-                    showException( ex, getMainComponent() );
-                }
-            }
-        });
-        return item;
+        item.addActionListener(this);
     }
+	
+	public JMenuItem getMenuElement() {
+		return item;
+	}
+	
+	public String getId() {
+		return id;
+	}
 
+	 public void actionPerformed(ActionEvent evt) {
+         try {
+             Reader reader = null;
+             TemplateImport importService = null;
+             try
+             {
+                 importService = getWebservice( TemplateImport.class);
+             }
+             catch (Exception ex)
+             {
+                 
+             }
+             final Frame frame = (Frame) SwingUtilities.getRoot(getMainComponent());
+             if ( importService != null && importService.hasDBConnection())
+             {
+                 reader = new StringReader( importService.importFromServer());
+             }
+             else
+             {
+                 IOInterface io =  getService( IOInterface.class);
+                 FileContent file = io.openFile( frame, null, new String[] {".csv"});
+                 if ( file != null) 
+                 {
+                     reader = new InputStreamReader( file.getInputStream());
+                     //String[][] entries = Tools.csvRead( reader, ',',1 ); // read first 5 colums per input row and store in memory
+                 }
+                 
+             }
+             
+             if ( reader != null)
+             {
+                 ICsvMapReader mapReader = null;
+                 List<Entry> list=new ArrayList<Entry>();
+                 try {
+                     mapReader = new CsvMapReader(reader, CsvPreference.STANDARD_PREFERENCE);
+                     
+                     // the header columns are used as the keys to the Map
+                     final String[] header = mapReader.getHeader(true);
+                     final CellProcessor[] processors = new CellProcessor[header.length];
+                     for ( int i=0;i<processors.length;i++)
+                     {
+                         processors[i]= new Optional();
+                     }
+                     
+                     Map<String, Object> customerMap;
+                     while( (customerMap = mapReader.read(header, processors)) != null ) 
+                     {
+                          list.add(new Entry(customerMap));
+                     }
+                     confirmImport(frame, header, list);
+                 }
+                 finally {
+                     if( mapReader != null ) {
+                         mapReader.close();
+                     }
+                 }
+             }
+             
+          } catch (Exception ex) {
+             showException( ex, getMainComponent() );
+         }
+     }
     public class JIDCellEditor extends AbstractCellEditor implements TableCellEditor {
 
 	    JComboBox jComboBox;

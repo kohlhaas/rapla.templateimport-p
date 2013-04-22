@@ -11,6 +11,7 @@
  | Definition as published by the Open Source Initiative (OSI).             |
  *--------------------------------------------------------------------------*/
 package org.rapla.plugin.listexport;
+import org.rapla.client.ClientServiceContainer;
 import org.rapla.components.xmlbundle.I18nBundle;
 import org.rapla.components.xmlbundle.impl.I18nBundleImpl;
 import org.rapla.framework.Configuration;
@@ -19,29 +20,22 @@ import org.rapla.framework.PluginDescriptor;
 import org.rapla.framework.TypedComponentRole;
 import org.rapla.plugin.RaplaClientExtensionPoints;
 
-public class ListExportPlugin implements PluginDescriptor
+public class ListExportPlugin implements PluginDescriptor<ClientServiceContainer>
 {
 	public static final TypedComponentRole<I18nBundle> RESOURCE_FILE = new TypedComponentRole<I18nBundle>(ListExportPlugin.class.getPackage().getName() + ".ListExportResources");
     public static final String PLUGIN_CLASS = ListExportPlugin.class.getName();
 
-    public String toString() {
-        return "List Export";
-    }
     
     /**
      * @see org.rapla.framework.PluginDescriptor#provideServices(org.rapla.framework.general.Container)
      */
-    public void provideServices(Container container, Configuration config) {
+    public void provideServices(ClientServiceContainer container, Configuration config) {
         if ( !config.getAttributeAsBoolean("enabled", false) )
         	return;
         container.addContainerProvidedComponent( RESOURCE_FILE, I18nBundleImpl.class, I18nBundleImpl.createConfig( RESOURCE_FILE.getId() ) );
-        container.addContainerProvidedComponent( RaplaClientExtensionPoints.CLIENT_EXTENSION, ListExportPluginInitializer.class);
+        container.addContainerProvidedComponent( RaplaClientExtensionPoints.EXPORT_MENU_EXTENSION_POINT, ListExportPluginInitializer.class);
         //container.addContainerProvidedComponent( RaplaExtensionPoints.USER_OPTION_PANEL_EXTENSION, DBExportOption.class.getName(),PLUGIN_CLASS, config);
     }
 
-    public Object getPluginMetaInfos( String key )
-    {
-        return null;
-    }
 
 }
