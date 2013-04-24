@@ -247,7 +247,7 @@ public class RaplaDBExport  {
         
         //out.print(SEPARATOR + getColumnName (tableName + "_" + getString("Type_Id")));					
 
-        out.print(SEPARATOR + getColumnName (tableName + "_" + i18n.getString("reservation.name")));
+        out.print(SEPARATOR + getColumnName (tableName + "_" + i18n.getString("eventname")));
 
         out.print(SEPARATOR + getColumnName (tableName + "_" + i18n.getString("Status")));													
         out.print(SEPARATOR + getColumnName (tableName + "_" + i18n.getString("Confirmation")));													

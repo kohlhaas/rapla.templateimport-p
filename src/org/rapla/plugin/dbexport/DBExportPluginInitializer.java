@@ -315,7 +315,7 @@ public class DBExportPluginInitializer extends RaplaGUIComponent implements Iden
         
         //out.append(SEPARATOR + getColumnName (tableName + "_" + getString("Type_Id")));					
 
-        out.append(SEPARATOR + getColumnName (tableName + "_" + getString("reservation.name")));
+        out.append(SEPARATOR + getColumnName (tableName + "_" + getString("eventname")));
 
         out.append(SEPARATOR + getColumnName (tableName + "_" + getString("Status")));													
         out.append(SEPARATOR + getColumnName (tableName + "_" + getString("Confirmation")));													
