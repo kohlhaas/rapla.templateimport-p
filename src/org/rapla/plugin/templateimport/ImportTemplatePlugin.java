@@ -12,13 +12,13 @@
  *--------------------------------------------------------------------------*/
 package org.rapla.plugin.templateimport;
 import org.rapla.client.ClientServiceContainer;
+import org.rapla.client.RaplaClientExtensionPoints;
 import org.rapla.components.xmlbundle.I18nBundle;
 import org.rapla.components.xmlbundle.impl.I18nBundleImpl;
 import org.rapla.framework.Configuration;
 import org.rapla.framework.PluginDescriptor;
 import org.rapla.framework.RaplaContextException;
 import org.rapla.framework.TypedComponentRole;
-import org.rapla.plugin.RaplaClientExtensionPoints;
 
 // Plugin will be available in the 1.7 release
 public class ImportTemplatePlugin  implements PluginDescriptor<ClientServiceContainer>
