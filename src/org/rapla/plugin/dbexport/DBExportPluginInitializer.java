@@ -17,6 +17,7 @@ import java.util.Locale;
 import javax.swing.JMenuItem;
 import javax.swing.SwingUtilities;
 
+import org.rapla.RaplaMainContainer;
 import org.rapla.components.iolayer.IOInterface;
 import org.rapla.components.util.DateTools;
 import org.rapla.entities.Category;
@@ -40,7 +41,6 @@ import org.rapla.framework.RaplaContext;
 import org.rapla.framework.RaplaException;
 import org.rapla.framework.StartupEnvironment;
 import org.rapla.gui.RaplaGUIComponent;
-import org.rapla.gui.internal.RaplaStartOption;
 import org.rapla.gui.toolkit.DialogUI;
 import org.rapla.gui.toolkit.IdentifiableMenuEntry;
 import org.rapla.plugin.tableview.internal.AppointmentTableViewFactory;
@@ -205,7 +205,7 @@ public class DBExportPluginInitializer extends RaplaGUIComponent implements Iden
 	    	out.append("\n");  
 	    }
 		DateFormat sdfyyyyMMdd = new SimpleDateFormat("yyyyMMdd");
-		final String calendarName = getQuery().getPreferences( null ).getEntryAsString(RaplaStartOption.TITLE, getString("rapla.title"));
+		final String calendarName = getQuery().getPreferences( null ).getEntryAsString(RaplaMainContainer.TITLE, getString("rapla.title"));
 		if(DateTools.countDays(startDate, endDate) == 1)
 			saveFile( 
 					 out.toString().getBytes()

@@ -54,7 +54,6 @@ import org.rapla.framework.RaplaException;
 import org.rapla.framework.StartupEnvironment;
 import org.rapla.framework.logger.ConsoleLogger;
 import org.rapla.framework.logger.Logger;
-import org.rapla.gui.internal.RaplaStartOption;
 
 
 public class RaplaDBExport  {
@@ -512,7 +511,7 @@ public class RaplaDBExport  {
 			DateFormat sdfyyyyMMdd = new SimpleDateFormat("yyyyMMdd");
 			if(workDir.isEmpty())
 				workDir = System.getProperty("user.dir");
-			final String calendarName = facade.getPreferences( null ).getEntryAsString(RaplaStartOption.TITLE, i18n.getString("rapla.title"));
+			final String calendarName = facade.getPreferences( null ).getEntryAsString(RaplaMainContainer.TITLE, i18n.getString("rapla.title"));
             String fileName = workDir + System.getProperty("file.separator") + calendarName + "-" + sdfyyyyMMdd.format( startDate ) + ".csv";
 			FileOutputStream fstream = new FileOutputStream(fileName);
             logger.info("Producing: " + fileName);			
