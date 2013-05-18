@@ -62,6 +62,7 @@ public class RaplaTemplateImport extends RaplaComponent implements RemoteMethodF
             while (set.next())
             {
                 Map<String,String> map = new LinkedHashMap<String, String>();
+                boolean ignore = false;
                 for ( int i= 0;i<columnCount;i++)
                 {
                     String column =header[i] ;
@@ -72,7 +73,16 @@ public class RaplaTemplateImport extends RaplaComponent implements RemoteMethodF
                         if (object instanceof Date)
                         {
                             SerializableDateTimeFormat formater = new SerializableDateTimeFormat(getRaplaLocale().createCalendar());
-                            string = formater.formatDate( new Date( ((Date) object).getTime() ));
+                            Date date = new Date( ((Date) object).getTime() );
+							string = formater.formatDate( date);
+                            if ( column.equals( TemplateImport.BEGIN_KEY))
+                            {
+                            	if ( date.before( getQuery().today()))
+                            	{
+                            		ignore = true;
+                            		break;
+                            	}
+                            }
                         }
                         else
                         {
@@ -81,8 +91,10 @@ public class RaplaTemplateImport extends RaplaComponent implements RemoteMethodF
                         map.put( column, string);
                     }
                 }   
-                writer.write( map, header , processors);
-                
+                if ( !ignore)
+                {
+                	writer.write( map, header , processors);
+                }
                 writer.flush();
                 count++;
             }
