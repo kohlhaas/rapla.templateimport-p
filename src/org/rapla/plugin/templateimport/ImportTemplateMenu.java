@@ -23,7 +23,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -46,10 +45,7 @@ import org.rapla.components.util.DateTools;
 import org.rapla.components.util.SerializableDateTimeFormat;
 import org.rapla.entities.Entity;
 import org.rapla.entities.User;
-import org.rapla.entities.domain.Appointment;
-import org.rapla.entities.domain.Repeating;
 import org.rapla.entities.domain.Reservation;
-import org.rapla.entities.domain.ReservationStartComparator;
 import org.rapla.entities.domain.Template;
 import org.rapla.entities.dynamictype.Attribute;
 import org.rapla.entities.dynamictype.Classification;
@@ -309,65 +305,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 		}
 
 
-		private List<Entity<Reservation>> copy(Template template, Date beginn) throws RaplaException 
-		{
-			Collection<Reservation> toCopy = template.getReservations();
-			List<Reservation> sortedReservations = new ArrayList<Reservation>(  toCopy);
-			Collections.sort( sortedReservations, new ReservationStartComparator(getLocale()));
-			List<Entity<Reservation>> copies = new ArrayList<Entity<Reservation>>();
-			Date firstStart = null;
-			for (Reservation reservation: sortedReservations) {
-			    if ( firstStart == null )
-			    {
-			        firstStart = ReservationStartComparator.getStart( reservation);
-			    }
-			    Reservation copy = copy(reservation, beginn, firstStart);
-			    copies.add( copy);
-			}
-			return copies;
-		}
 		
-		public Reservation copy(Reservation reservation, Date destStart,Date firstStart) throws RaplaException {
-			Reservation r =  getModification().clone( reservation);
-	        r.setAnnotation(Reservation.TEMPLATE, null);
-			Appointment[] appointments = r.getAppointments();
-		
-			for ( Appointment app :appointments) {
-				Repeating repeating = app.getRepeating();
-			    
-			    Date oldStart = app.getStart();
-			    // we need to calculate an offset so that the reservations will place themself relativ to the first reservation in the list
-			    long offset = DateTools.countDays( firstStart, oldStart) * DateTools.MILLISECONDS_PER_DAY;
-			    Date newStart ;
-			    Date destWithOffset = new Date(destStart.getTime() + offset );
-			    newStart = getRaplaLocale().toDate(  destWithOffset  , oldStart );
-			    app.move( newStart) ;
-			    if (repeating != null)
-			    {
-			    	Date[] exceptions = repeating.getExceptions();
-		    		repeating.clearExceptions();
-		       		for (Date exc: exceptions)
-		    		{
-		    		 	long days = DateTools.countDays(oldStart, exc);
-		        		Date newDate = DateTools.addDays(newStart, days);
-		        		repeating.addException( newDate);
-		    		}
-			    	
-			    	if ( !repeating.isFixedNumber())
-			    	{
-			        	Date oldEnd = repeating.getEnd();
-			        	if ( oldEnd != null)
-			        	{
-			        		// If we don't have and endig destination, just make the repeating to the original length
-			        		long days = DateTools.countDays(oldStart, oldEnd);
-			        		Date end = DateTools.addDays(newStart, days);
-			        		repeating.setEnd( end);
-			        	}
-			    	}	    
-			    }
-			}
-			return r;
-		}
 
 		private void map(List<Entity<Reservation>> reservations,Map<String, Object> entries) throws RaplaException 
 		{
