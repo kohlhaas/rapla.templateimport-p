@@ -32,7 +32,7 @@ public class ImportTemplatePlugin  implements PluginDescriptor<ClientServiceCont
         	return;
 
         container.addContainerProvidedComponent( RESOURCE_FILE, I18nBundleImpl.class,I18nBundleImpl.createConfig( RESOURCE_FILE.getId() ) );
-        container.addContainerProvidedComponent( RaplaClientExtensionPoints.IMPORT_MENU_EXTENSION_POINT, ImportTemplatePluginInitializer.class);
+        container.addContainerProvidedComponent( RaplaClientExtensionPoints.IMPORT_MENU_EXTENSION_POINT, ImportTemplateMenu.class);
     }
 
 }

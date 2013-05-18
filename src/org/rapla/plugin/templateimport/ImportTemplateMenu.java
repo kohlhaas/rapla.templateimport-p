@@ -22,6 +22,7 @@ import java.io.StringReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -43,16 +44,15 @@ import org.rapla.components.iolayer.FileContent;
 import org.rapla.components.iolayer.IOInterface;
 import org.rapla.components.util.DateTools;
 import org.rapla.components.util.SerializableDateTimeFormat;
+import org.rapla.entities.Entity;
 import org.rapla.entities.User;
 import org.rapla.entities.domain.Appointment;
 import org.rapla.entities.domain.Repeating;
 import org.rapla.entities.domain.Reservation;
 import org.rapla.entities.domain.ReservationStartComparator;
+import org.rapla.entities.domain.Template;
 import org.rapla.entities.dynamictype.Attribute;
 import org.rapla.entities.dynamictype.Classification;
-import org.rapla.entities.dynamictype.ClassificationFilter;
-import org.rapla.entities.dynamictype.DynamicType;
-import org.rapla.entities.dynamictype.DynamicTypeAnnotations;
 import org.rapla.framework.RaplaContext;
 import org.rapla.framework.RaplaException;
 import org.rapla.gui.RaplaGUIComponent;
@@ -65,11 +65,11 @@ import org.supercsv.io.ICsvMapReader;
 import org.supercsv.prefs.CsvPreference;
 
 
-public class ImportTemplatePluginInitializer extends RaplaGUIComponent implements IdentifiableMenuEntry,ActionListener
+public class ImportTemplateMenu extends RaplaGUIComponent implements IdentifiableMenuEntry,ActionListener
 {
 	String id = "events into templates";
 	JMenuItem item; 
-	public ImportTemplatePluginInitializer(RaplaContext sm) throws RaplaException {
+	public ImportTemplateMenu(RaplaContext sm)  {
         super(sm);
        
         setChildBundleName( ImportTemplatePlugin.RESOURCE_FILE);
@@ -134,7 +134,12 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent implement
                      Map<String, Object> customerMap;
                      while( (customerMap = mapReader.read(header, processors)) != null ) 
                      {
-                          list.add(new Entry(customerMap));
+                          Entry e = new Entry(customerMap);
+	                      Date beginn = e.getBeginn();
+	                      if ( beginn != null && beginn.after( getQuery().today()))
+	                      {
+	                    	  list.add(e);
+	                      }
                      }
                      confirmImport(frame, header, list);
                  }
@@ -148,13 +153,15 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent implement
           } catch (Exception ex) {
              showException( ex, getMainComponent() );
          }
-     }
-    public class JIDCellEditor extends AbstractCellEditor implements TableCellEditor {
+    }
+    
+	 public class JIDCellEditor extends AbstractCellEditor implements TableCellEditor {
 
-	    JComboBox jComboBox;
-	    List<Template> templates = new ArrayList<ImportTemplatePluginInitializer.Template>();
+		private static final long serialVersionUID = 1L;
+		JComboBox jComboBox;
+	    Collection<Template> templates;
 
-	    JIDCellEditor( List<Template> templates)
+	    JIDCellEditor( Collection<Template> templates)
 	    {
 	    	this.templates = templates;	
 	    }
@@ -172,26 +179,6 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent implement
 	    }
 	}
     
-    class Template
-    {
-    	public List<Reservation> reservations;
-    	public Template(List<Reservation> reservations)
-    	{
-    		this.reservations = reservations;
-    	}
-    	
-    	public String toString()
-    	{
-    		String name = reservations.get(0).getName( getLocale());
-            if  (reservations.size() > 1)
-            {
-                name += " ("+ reservations.size() + " " + getString("reservations") + ")"; 
-            }
-            return name;
-            
-    	}
-    }
-    
     enum Status
     {
     	zu_loeschen,
@@ -203,14 +190,13 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent implement
     }
 
     private static final String PRIMARY_KEY = "Seminarnummer";
-    private static final String TEMPLATE_KEY = "TitelID";
-    private static final String BEGIN_KEY = "DatumVon";
+    private static final String TEMPLATE_KEY = "TitelName";
     private static final String STORNO_KEY = "StorniertAm";
     
     class Entry
     {
     	private Map<String, Object> entries;
-    	private List<Reservation> reservations = new ArrayList<Reservation>();
+    	private List<Entity<Reservation>> reservations = new ArrayList<Entity<Reservation>>();
 		private Template template;
 		
 		
@@ -218,14 +204,14 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent implement
     		this.entries = entries;
     	}
 
-    	public void setReservations( List<Reservation> events)
+    	public void setReservations( List<Entity<Reservation>> events)
     	{
     	    this.reservations = events;
     	}
     	
     	public Date getBeginn() throws ParseException
     	{
-            String dateString = (String)entries.get(BEGIN_KEY);
+            String dateString = (String)entries.get(TemplateImport.BEGIN_KEY);
     		if (dateString != null)
     		{
     		    Date parse;
@@ -317,18 +303,18 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent implement
 			}
 		}
 
-		private void remove(List<Reservation> reservations) throws RaplaException 
+		private void remove(List<Entity<Reservation>> reservations) throws RaplaException 
 		{
 			getModification().removeObjects( reservations.toArray( Reservation.RESERVATION_ARRAY));
 		}
 
 
-		private List<Reservation> copy(Template template2, Date beginn) throws RaplaException 
+		private List<Entity<Reservation>> copy(Template template, Date beginn) throws RaplaException 
 		{
-			List<Reservation> toCopy = template2.reservations;
+			Collection<Reservation> toCopy = template.getReservations();
 			List<Reservation> sortedReservations = new ArrayList<Reservation>(  toCopy);
 			Collections.sort( sortedReservations, new ReservationStartComparator(getLocale()));
-			List<Reservation> copies = new ArrayList<Reservation>();
+			List<Entity<Reservation>> copies = new ArrayList<Entity<Reservation>>();
 			Date firstStart = null;
 			for (Reservation reservation: sortedReservations) {
 			    if ( firstStart == null )
@@ -342,8 +328,8 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent implement
 		}
 		
 		public Reservation copy(Reservation reservation, Date destStart,Date firstStart) throws RaplaException {
-			Reservation r = (Reservation) getModification().clone( reservation);
-	        
+			Reservation r =  getModification().clone( reservation);
+	        r.setAnnotation(Reservation.TEMPLATE, null);
 			Appointment[] appointments = r.getAppointments();
 		
 			for ( Appointment app :appointments) {
@@ -383,33 +369,30 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent implement
 			return r;
 		}
 
-
-		private void map(List<Reservation> reservations2,Map<String, Object> entries2) throws RaplaException 
+		private void map(List<Entity<Reservation>> reservations,Map<String, Object> entries) throws RaplaException 
 		{
 			ArrayList<Reservation> toStore = new ArrayList<Reservation>();
-			for (Reservation r: reservations2)
+			Collection<Entity<Reservation>> editObjects = getModification().edit(reservations);
+			for (Entity<Reservation> edit: editObjects)
 			{
-				Reservation edit;
-				if ( r.isPersistant())
-				{
-					edit = getModification().edit(r);
-				}
-				else
-				{
-					edit = r;
-				}
-				map( edit.getClassification(), entries2);
-				toStore.add( edit);
+				Reservation reservation = edit.cast();
+				map( reservation, entries);
+				toStore.add( reservation);
 			}
 			getModification().storeObjects( toStore.toArray( Reservation.RESERVATION_ARRAY));
 		}
 
 
-		private void map(Classification c, Map<String, Object> entries2) {
+		private void map(Reservation reservation,Map<String, Object> entries) throws RaplaException {
+			Classification c = reservation.getClassification();
 			for (Map.Entry<String, Object> e: entries.entrySet())
 			{
 				String key = e.getKey();
 				Object value = e.getValue();
+				if ( key.equals( PRIMARY_KEY) && value != null)
+				{
+					reservation.setAnnotation(Reservation.EXTERNALID, value.toString());
+				}
 				Attribute attribute = c.getAttribute( key );
 				if ( attribute != null && value!= null)
 				{
@@ -417,12 +400,16 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent implement
 					c.setValue( key, convertValue);
 				}
 			}
+			if ( reservation.getAnnotation( Reservation.EXTERNALID) == null)
+			{
+				throw new RaplaException("Primary Key [" + PRIMARY_KEY + "] not set in row " + entries.toString()  );
+			}
 		}
 		
-		private boolean needsUpdate(List<Reservation> events, Map<String, Object> entries2) {
-			for ( Reservation r:events)
+		private boolean needsUpdate(List<Entity<Reservation>> events, Map<String, Object> entries) {
+			for ( Entity<Reservation> r:events)
 			{
-				if ( needsUpdate( r.getClassification(), entries2))
+				if ( needsUpdate( r.cast().getClassification(), entries))
 				{
 					return true;
 				}
@@ -430,7 +417,7 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent implement
 			return false;
 		}
 		
-		private boolean needsUpdate(Classification c, Map<String, Object> entries2) {
+		private boolean needsUpdate(Classification c, Map<String, Object> entries) {
 			for (Map.Entry<String, Object> e: entries.entrySet())
 			{
 				String key = e.getKey();
@@ -459,7 +446,7 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent implement
 			return false;
 		}
 
-        public List<Reservation> getReservations() {
+        public List<Entity<Reservation>> getReservations() {
             return reservations;
         }
 		
@@ -472,75 +459,31 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent implement
          User user = null;
          Date start=getQuery().today();
          Date end = null;
-         Map<String,List<Reservation>> keyMap = new LinkedHashMap<String, List<Reservation>>();
+         Map<String,List<Entity<Reservation>>> keyMap = new LinkedHashMap<String, List<Entity<Reservation>>>();
 
-         DynamicType[] dynamicTypes = getQuery().getDynamicTypes(DynamicTypeAnnotations.VALUE_CLASSIFICATION_TYPE_RESERVATION);
+         Reservation[] reservations = getQuery().getReservations(user, start, end, null);
+         
+         for ( Reservation r:reservations)
          {
-             List<ClassificationFilter> filters = new ArrayList<ClassificationFilter>();
-             for (DynamicType type:dynamicTypes)
+             String key = r.getAnnotation(Reservation.EXTERNALID);
+             if  ( key != null )
              {
-                if (type.getAttribute(PRIMARY_KEY) != null ) 
-                {
-                    ClassificationFilter filter = type.newClassificationFilter();
-                    //filter.addEqualsRule(PRIMARY_KEY, primaryKey);
-                    filters.add( filter);
-                }
-             }
-             Reservation[] reservations = getQuery().getReservations(user, start, end, filters.toArray(ClassificationFilter.CLASSIFICATIONFILTER_ARRAY));
-             
-             for ( Reservation r:reservations)
-             {
-                 Object key = r.getClassification().getValue(PRIMARY_KEY);
-                 if  ( key != null )
+                 List<Entity<Reservation>> list = keyMap.get( key);
+                 if ( list == null)
                  {
-                     String string = key.toString();
-                     List<Reservation> list = keyMap.get( string);
-                     if ( list == null)
-                     {
-                         list = new ArrayList<Reservation>();
-                         keyMap.put( string, list);
-                     }
-                     list.add( r);
+                     list = new ArrayList<Entity<Reservation>>();
+                     keyMap.put( key, list);
                  }
+                 list.add( r);
              }
          }
-         Map<String,List<Reservation>> templateMap = new LinkedHashMap<String, List<Reservation>>();
-         {
-             List<ClassificationFilter> filters = new ArrayList<ClassificationFilter>();
-             for (DynamicType type:dynamicTypes)
-             {
-                if (type.getAttribute(PRIMARY_KEY) != null && type.getAttribute(TEMPLATE_KEY) != null)
-                {
-                    ClassificationFilter filter = type.newClassificationFilter();
-                    filter.addRule(PRIMARY_KEY, new Object[][] {{"=",null},{"=",""}});
-                    filters.add( filter);
-                }
-             }
-             Reservation[] reservations = getQuery().getReservations(user, start, end, filters.toArray(ClassificationFilter.CLASSIFICATIONFILTER_ARRAY));
-             
-             for ( Reservation r:reservations)
-             {
-                 Object key = r.getClassification().getValue(TEMPLATE_KEY);
-                 if  ( key != null && key.toString().length() > 0 )
-                 {
-                     String string = key.toString();
-                     List<Reservation> list = templateMap.get( string);
-                     if ( list == null)
-                     {
-                         list = new ArrayList<Reservation>();
-                         templateMap.put( string, list);
-                     }
-                     list.add( r);
-                 }
-             }
-         }
-
+         Map<String,Template> templateMap = getQuery().getTemplateMap();
          for (int i = 0; i < entries.size(); i++)
          { 	 
         	 Entry row = entries.get(i);
         	 {
         		 String primaryKey = (String) row.get(PRIMARY_KEY);
-        		 List<Reservation> events = keyMap.get( primaryKey);
+        		 List<Entity<Reservation>> events = keyMap.get( primaryKey);
         		 if ( events != null)
         		 {
         		     row.setReservations(events);
@@ -549,22 +492,15 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent implement
         	 if ( row.getReservations().size() == 0)
         	 {
         		 String key = (String) row.get(TEMPLATE_KEY);
-        		 List<Reservation> events = templateMap.get( key);
+        		 Template template = templateMap.get( key);
                   
-        		 if ( events != null)
+        		 if ( template != null)
 	        	 {
-	        		 row.template = new Template(events);
+	        		 row.template = template;
 	        	 } 
         	 }
     	 }
         	
-         List<Template> templateList = new ArrayList<ImportTemplatePluginInitializer.Template>();
-         for ( Map.Entry<String, List<Reservation>> entry: templateMap.entrySet())
-         {
-             List<Reservation> values = entry.getValue();
-             Template template = new Template( values);
-             templateList.add( template );
-    	 }
          for (int i = 0; i < entries.size(); i++)
          { 	 
         	 Entry row = entries.get(i);
@@ -606,7 +542,7 @@ public class ImportTemplatePluginInitializer extends RaplaGUIComponent implement
          {
         	 TableColumn templateColumn = table.getColumnModel().getColumn( header.length+1);
         	 templateColumn.setMinWidth(300);
-        	 templateColumn.setCellEditor( new JIDCellEditor(templateList));
+        	 templateColumn.setCellEditor( new JIDCellEditor(templateMap.values()));
          }
          JScrollPane pane = new JScrollPane(table,JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
          //pane.setPreferredSize( new Dimension(2000,800));
