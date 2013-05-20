@@ -31,6 +31,7 @@ import java.util.Vector;
 
 import javax.swing.AbstractCellEditor;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -74,6 +75,9 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
         item.setIcon( getIcon("icon.import") );
         item.addActionListener(this);
     }
+	
+	
+
 	
 	public JMenuItem getMenuElement() {
 		return item;
@@ -294,7 +298,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 				case geloescht: break;
 				case aktuallisieren: map(reservations, entries) ;
 						break;
-				case template: reservations= copy(template, getBeginn());map(reservations, entries) ;break;
+				case template: reservations= copy(template.getReservations(), getBeginn());map(reservations, entries) ;break;
 				case zu_loeschen: remove(reservations);break;
 			}
 		}
@@ -454,7 +458,18 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
      		 tableContent[i][header.length+1] = row.template;
          }
 
-         JTable table = new JTable();
+         final JTable table = new JTable();
+     	
+         ActionListener copyListener = new ActionListener() {
+     		
+     		public void actionPerformed(ActionEvent evt) 
+     		{
+     	        copy(table, evt);            
+     		}
+
+     	};
+     	table.registerKeyboardAction(copyListener,getString("copy"),COPY_STROKE,JComponent.WHEN_FOCUSED);
+        
          String[] newHeader = new String[header.length+2];
          System.arraycopy(header, 0, newHeader, 0, header.length);
          newHeader[header.length] = "status";
@@ -476,10 +491,10 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
         	} 
          };
          table.setModel(dataModel);
-         table.getColumnModel().getColumn( header.length).setMinWidth(150);
+         table.getColumnModel().getColumn( header.length).setMinWidth(100);
          {
         	 TableColumn templateColumn = table.getColumnModel().getColumn( header.length+1);
-        	 templateColumn.setMinWidth(300);
+        	 templateColumn.setMinWidth(250);
         	 templateColumn.setCellEditor( new JIDCellEditor(templateMap.values()));
          }
          JScrollPane pane = new JScrollPane(table,JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);

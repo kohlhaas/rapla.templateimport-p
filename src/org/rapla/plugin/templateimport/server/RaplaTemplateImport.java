@@ -14,6 +14,7 @@ import org.rapla.components.util.SerializableDateTimeFormat;
 import org.rapla.facade.RaplaComponent;
 import org.rapla.framework.RaplaContext;
 import org.rapla.framework.RaplaException;
+import org.rapla.framework.RaplaLocale;
 import org.rapla.plugin.templateimport.TemplateImport;
 import org.rapla.server.RemoteMethodFactory;
 import org.rapla.server.RemoteSession;
@@ -33,6 +34,7 @@ public class RaplaTemplateImport extends RaplaComponent implements RemoteMethodF
 
     public String importFromServer() throws RaplaException
     {
+        RaplaLocale raplaLocale = getRaplaLocale();
         StringWriter stringWriter = new StringWriter();
         CsvMapWriter writer = new CsvMapWriter(stringWriter, CsvPreference.STANDARD_PREFERENCE);
         DBOperator operator = (DBOperator) getClientFacade().getOperator();
@@ -73,7 +75,8 @@ public class RaplaTemplateImport extends RaplaComponent implements RemoteMethodF
                         if (object instanceof Date)
                         {
                             SerializableDateTimeFormat formater = new SerializableDateTimeFormat(getRaplaLocale().createCalendar());
-                            Date date = new Date( ((Date) object).getTime() );
+
+							Date date = raplaLocale.toRaplaTime( raplaLocale.getSystemTimeZone(),((Date) object));
 							string = formater.formatDate( date);
                             if ( column.equals( TemplateImport.BEGIN_KEY))
                             {
