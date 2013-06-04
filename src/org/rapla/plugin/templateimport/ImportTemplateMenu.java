@@ -298,6 +298,12 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 				case geloescht: break;
 				case aktuallisieren: map(reservations, entries) ;
 						break;
+				case template_waehlen: 
+					if ( template != null )
+					{
+					reservations= copy(template.getReservations(), getBeginn());map(reservations, entries) ;break;
+					}
+					break;
 				case template: reservations= copy(template.getReservations(), getBeginn());map(reservations, entries) ;break;
 				case zu_loeschen: remove(reservations);break;
 			}
@@ -398,27 +404,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
          Object[][] tableContent = new Object[entries.size()][header.length+2];
          
          
-         User user = null;
-         Date start=getQuery().today();
-         Date end = null;
-         Map<String,List<Entity<Reservation>>> keyMap = new LinkedHashMap<String, List<Entity<Reservation>>>();
-
-         Reservation[] reservations = getQuery().getReservations(user, start, end, null);
-         
-         for ( Reservation r:reservations)
-         {
-             String key = r.getAnnotation(Reservation.EXTERNALID);
-             if  ( key != null )
-             {
-                 List<Entity<Reservation>> list = keyMap.get( key);
-                 if ( list == null)
-                 {
-                     list = new ArrayList<Entity<Reservation>>();
-                     keyMap.put( key, list);
-                 }
-                 list.add( r);
-             }
-         }
+         Map<String, List<Entity<Reservation>>> keyMap = getImportedReservations();
          Map<String,Template> templateMap = getQuery().getTemplateMap();
          for (int i = 0; i < entries.size(); i++)
          { 	 
@@ -515,7 +501,10 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
         	 {
         		 Entry entry = entries.get(i);
         		 Template template = (Template)table.getValueAt(i, header.length+1);
-        		 entry.template = template;
+        		 if ( template != null)
+        		 {
+        			 entry.template = template;
+        		 }
         		 try {
 					entry.process();
 				} catch (ParseException e) {
@@ -524,6 +513,35 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
         	 }
          }
          return;
+	}
+
+
+
+
+	protected Map<String, List<Entity<Reservation>>> getImportedReservations()
+			throws RaplaException {
+		User user = null;
+         Date start=getQuery().today();
+         Date end = null;
+         Map<String,List<Entity<Reservation>>> keyMap = new LinkedHashMap<String, List<Entity<Reservation>>>();
+
+         Reservation[] reservations = getQuery().getReservations(user, start, end, null);
+         
+         for ( Reservation r:reservations)
+         {
+             String key = r.getAnnotation(Reservation.EXTERNALID);
+             if  ( key != null )
+             {
+                 List<Entity<Reservation>> list = keyMap.get( key);
+                 if ( list == null)
+                 {
+                     list = new ArrayList<Entity<Reservation>>();
+                     keyMap.put( key, list);
+                 }
+                 list.add( r);
+             }
+         }
+		return keyMap;
 	}
    
 }
