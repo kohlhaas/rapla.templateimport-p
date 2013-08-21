@@ -199,7 +199,7 @@ public class RaplaDBExport  {
 	        Allocatable[] resources = reservation.getResources();
 	        allocatableData(resources, false, out, app);
 	        
-	        reservationData(app, out, blocks.get(i).getStart() ); 
+	        reservationData(app, out, blocks.get(i).getStart(), facade); 
 	        
 	    	out.print("\n");  
 	    }
@@ -258,7 +258,7 @@ public class RaplaDBExport  {
 								  
 	}
 	
-	private static void reservationData(Appointment app, PrintStream out, long startDate) {
+	private static void reservationData(Appointment app, PrintStream out, long startDate, ClientFacade facade) {
 		// Reservation reservation = app.getReservation();
         Classifiable classifiable = (Classifiable) app.getReservation();
         Classification classification = classifiable.getClassification();
@@ -334,7 +334,7 @@ public class RaplaDBExport  {
     			if (r.getEnd() != null)
     				edate = r.getEnd();
     			else {// set date to 9999-12-31
-    				Calendar cal= DateTools.createGMTCalendar();   
+    				Calendar cal= Calendar.getInstance(DateTools.getTimeZone());   
     				cal.set(Calendar.YEAR, 9999); 
     				cal.set(Calendar.MONTH, Calendar.DECEMBER); 
     				cal.set(Calendar.DAY_OF_MONTH, 31); 

@@ -406,7 +406,7 @@ public class DBExportPluginInitializer extends RaplaGUIComponent implements Iden
     			if (r.getEnd() != null)
     				edate = r.getEnd();
     			else {// set date to 9999-12-31
-    				Calendar cal= DateTools.createGMTCalendar();   
+    				Calendar cal= Calendar.getInstance(getRaplaLocale().getTimeZone());   
     				cal.set(Calendar.YEAR, 9999); 
     				cal.set(Calendar.MONTH, Calendar.DECEMBER); 
     				cal.set(Calendar.DAY_OF_MONTH, 31); 

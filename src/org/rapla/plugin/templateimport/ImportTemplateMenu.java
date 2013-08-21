@@ -209,7 +209,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
     	    this.reservations = events;
     	}
     	
-    	public Date getBeginn() throws ParseException
+    	public Date getBeginn() throws Exception
     	{
             String dateString = (String)entries.get(TemplateImport.BEGIN_KEY);
     		if (dateString != null)
@@ -223,7 +223,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
     		    }
     		    catch (ParseException ex)
     		    {
-    		        SerializableDateTimeFormat format = new SerializableDateTimeFormat( getRaplaLocale().createCalendar());
+    		        SerializableDateTimeFormat format = getRaplaLocale().getSerializableFormat();
                     boolean fillDate = false;
     		        parse = format.parseDate( dateString, fillDate);
     		    }
@@ -256,7 +256,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 				{
 					return Status.datum_fehlt;
 				}
-			} catch (ParseException e) {
+			} catch (Exception e) {
 				return Status.datum_fehlerhaft;
 			}
 			if ( isStorno())
@@ -291,7 +291,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 			}
 		}
 
-		public void process() throws ParseException, RaplaException {
+		public void process() throws Exception {
 			Status status =getStatus();
 			switch (status )
 			{
@@ -507,7 +507,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
         		 }
         		 try {
 					entry.process();
-				} catch (ParseException e) {
+				} catch (Exception e) {
 					throw new RaplaException( e);
 				}
         	 }

@@ -74,9 +74,9 @@ public class RaplaTemplateImport extends RaplaComponent implements RemoteMethodF
                         String string;
                         if (object instanceof Date)
                         {
-                            SerializableDateTimeFormat formater = new SerializableDateTimeFormat(getRaplaLocale().createCalendar());
+                            SerializableDateTimeFormat formater = getRaplaLocale().getSerializableFormat();
 
-							Date date = raplaLocale.toRaplaTime( raplaLocale.getSystemTimeZone(),((Date) object));
+							Date date = raplaLocale.toRaplaTime( raplaLocale.getImportExportTimeZone(),((Date) object));
 							string = formater.formatDate( date);
                             if ( column.equals( TemplateImport.BEGIN_KEY))
                             {
