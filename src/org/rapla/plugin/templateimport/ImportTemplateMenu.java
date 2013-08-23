@@ -11,6 +11,7 @@
  | Definition as published by the Open Source Initiative (OSI).             |
  *--------------------------------------------------------------------------*/
 package org.rapla.plugin.templateimport;
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Frame;
@@ -33,6 +34,7 @@ import javax.swing.AbstractCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JMenuItem;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
@@ -55,6 +57,7 @@ import org.rapla.framework.RaplaException;
 import org.rapla.gui.RaplaGUIComponent;
 import org.rapla.gui.toolkit.DialogUI;
 import org.rapla.gui.toolkit.IdentifiableMenuEntry;
+import org.rapla.gui.toolkit.RaplaButton;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvMapReader;
@@ -75,9 +78,6 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
         item.setIcon( getIcon("icon.import") );
         item.addActionListener(this);
     }
-	
-	
-
 	
 	public JMenuItem getMenuElement() {
 		return item;
@@ -155,7 +155,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
          }
     }
     
-	 public class JIDCellEditor extends AbstractCellEditor implements TableCellEditor {
+	 public class JIDCellEditor extends AbstractCellEditor implements TableCellEditor, ActionListener {
 
 		private static final long serialVersionUID = 1L;
 		JComboBox jComboBox;
@@ -175,8 +175,13 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 	        vector.addAll( templates);
 	        jComboBox = new JComboBox(vector);
 	        jComboBox.setSelectedItem(value);
+	        jComboBox.addActionListener( this);
 	        return jComboBox;
 	    }
+
+		public void actionPerformed(ActionEvent e) {
+			fireEditingStopped();
+		}
 	}
     
     enum Status
@@ -189,10 +194,6 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
     	datum_fehlt, datum_fehlerhaft, aktuell
     }
 
-    private static final String PRIMARY_KEY = "Seminarnummer";
-    private static final String TEMPLATE_KEY = "TitelName";
-    private static final String STORNO_KEY = "StorniertAm";
-    
     class Entry
     {
     	private Map<String, Object> entries;
@@ -239,7 +240,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
        	
        	public boolean isStorno()
        	{
-            String string = (String)entries.get(STORNO_KEY);
+            String string = (String)entries.get(TemplateImport.STORNO_KEY);
        		if ( string != null && string.trim().length() > 0)
        		{
        			return true;
@@ -314,9 +315,6 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 			getModification().removeObjects( reservations.toArray( Reservation.RESERVATION_ARRAY));
 		}
 
-
-		
-
 		private void map(List<Entity<Reservation>> reservations,Map<String, Object> entries) throws RaplaException 
 		{
 			ArrayList<Reservation> toStore = new ArrayList<Reservation>();
@@ -330,14 +328,13 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 			getModification().storeObjects( toStore.toArray( Reservation.RESERVATION_ARRAY));
 		}
 
-
 		private void map(Reservation reservation,Map<String, Object> entries) throws RaplaException {
 			Classification c = reservation.getClassification();
 			for (Map.Entry<String, Object> e: entries.entrySet())
 			{
 				String key = e.getKey();
 				Object value = e.getValue();
-				if ( key.equals( PRIMARY_KEY) && value != null)
+				if ( key.equals( TemplateImport.PRIMARY_KEY) && value != null)
 				{
 					reservation.setAnnotation(Reservation.EXTERNALID, value.toString());
 				}
@@ -350,7 +347,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 			}
 			if ( reservation.getAnnotation( Reservation.EXTERNALID) == null)
 			{
-				throw new RaplaException("Primary Key [" + PRIMARY_KEY + "] not set in row " + entries.toString()  );
+				throw new RaplaException("Primary Key [" + TemplateImport.PRIMARY_KEY + "] not set in row " + entries.toString()  );
 			}
 		}
 		
@@ -397,12 +394,11 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
         public List<Entity<Reservation>> getReservations() {
             return reservations;
         }
-		
     }
     
 	 private void confirmImport(final Component parentComponent, final String[] header, final List<Entry> entries) throws RaplaException {
-         Object[][] tableContent = new Object[entries.size()][header.length+2];
-         
+     
+		 Object[][] tableContent = new Object[entries.size()][header.length + 3];
          
          Map<String, List<Entity<Reservation>>> keyMap = getImportedReservations();
          Map<String,Template> templateMap = getQuery().getTemplateMap();
@@ -410,7 +406,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
          { 	 
         	 Entry row = entries.get(i);
         	 {
-        		 String primaryKey = (String) row.get(PRIMARY_KEY);
+        		 String primaryKey = (String) row.get(TemplateImport.PRIMARY_KEY);
         		 List<Entity<Reservation>> events = keyMap.get( primaryKey);
         		 if ( events != null)
         		 {
@@ -419,7 +415,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
         	 }
         	 if ( row.getReservations().size() == 0)
         	 {
-        		 String key = (String) row.get(TEMPLATE_KEY);
+        		 String key = (String) row.get(TemplateImport.TEMPLATE_KEY);
         		 Template template = templateMap.get( key);
                   
         		 if ( template != null)
@@ -428,24 +424,27 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 	        	 } 
         	 }
     	 }
-        	
+         final int selectCol = 0;
+         final int statusCol = header.length+1;	
+         final int templateCol = header.length+2;	
          for (int i = 0; i < entries.size(); i++)
          { 	 
         	 Entry row = entries.get(i);
+        	 tableContent[i][selectCol] = Boolean.TRUE;
         	 for (int j = 0; j < header.length ; j++) 
         	 {
         		 Object object = row.get(header[j]);
         		 if ( object != null)
         		 {
-        			 tableContent[i][j] = object.toString();
+        			 tableContent[i][j+1] = object.toString();
         		 }
         	 }
-    		 tableContent[i][header.length] = row.getStatus();
-     		 tableContent[i][header.length+1] = row.template;
+    		 tableContent[i][statusCol] = row.getStatus();
+     		 tableContent[i][templateCol] = row.template;
          }
 
          final JTable table = new JTable();
-     	
+     	 table.putClientProperty("terminateEditOnFocusLost", true);
          ActionListener copyListener = new ActionListener() {
      		
      		public void actionPerformed(ActionEvent evt) 
@@ -455,63 +454,135 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 
      	};
      	table.registerKeyboardAction(copyListener,getString("copy"),COPY_STROKE,JComponent.WHEN_FOCUSED);
-        
-         String[] newHeader = new String[header.length+2];
-         System.arraycopy(header, 0, newHeader, 0, header.length);
-         newHeader[header.length] = "status";
-         newHeader[header.length+1] = "template";
-         
-         DefaultTableModel dataModel = new DefaultTableModel(tableContent, newHeader)
+         String[] newHeader = new String[header.length+3];
+         newHeader[selectCol] = "";
+         System.arraycopy(header, 0, newHeader, 1, header.length);
+         newHeader[statusCol] = "status";
+         newHeader[templateCol] = "template";
+         final DefaultTableModel dataModel = new DefaultTableModel(tableContent, newHeader)
          {
         	@Override
         	public boolean isCellEditable(int row, int column) {
         		Entry entry = entries.get(row);
-        		if ( column == header.length+1)
+        		if ( column == templateCol)
         		{
-        			if ( entry.getStatus() != Status.template_waehlen )
+        			Status status = entry.getStatus();
+					if ( status != Status.template_waehlen && status != Status.template)
         			{
         				return false;
         			}
         		}
+        		if ( column == selectCol)
+        		{
+        			return true;
+        		}
         		return super.isCellEditable(row, column);
         	} 
+        	
+        	@Override
+        	public Class<?> getColumnClass(int columnIndex) {
+        		if ( columnIndex == selectCol)
+        		{
+        			return Boolean.class;
+        		}
+        		return super.getColumnClass(columnIndex);
+        	}
          };
          table.setModel(dataModel);
-         table.getColumnModel().getColumn( header.length).setMinWidth(100);
+         table.getColumnModel().getColumn( selectCol ).setWidth(15);
+         table.getColumnModel().getColumn( selectCol ).setMaxWidth(20);
+//         JCheckBox checkBoxC = new JCheckBox();
+//		TableCellEditor checkBox = new DefaultCellEditor(checkBoxC);
+//		DefaultTableCellRenderer.
+         table.getColumnModel().getColumn( statusCol ).setMinWidth(100);
          {
-        	 TableColumn templateColumn = table.getColumnModel().getColumn( header.length+1);
+        	 TableColumn templateColumn = table.getColumnModel().getColumn( templateCol);
         	 templateColumn.setMinWidth(250);
         	 templateColumn.setCellEditor( new JIDCellEditor(templateMap.values()));
          }
+         final RaplaButton everythingButton = new RaplaButton(RaplaButton.SMALL);
+         final RaplaButton  nothingButton = new RaplaButton(RaplaButton.SMALL);
+         
+         everythingButton.setText( getString("select_everything") );
+         everythingButton.setIcon( getIcon("icon.all-checked"));
+         nothingButton.setText(getString("select_nothing"));
+         nothingButton.setIcon( getIcon("icon.all-unchecked"));
+         
+         JPanel buttonPanel = new JPanel();
+         buttonPanel.add( everythingButton );
+         buttonPanel.add( nothingButton );
+         
          JScrollPane pane = new JScrollPane(table,JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+       
+         JPanel content = new JPanel();
+         content.setLayout( new BorderLayout());
+         content.add( buttonPanel, BorderLayout.NORTH);
+         content.add( pane, BorderLayout.CENTER);
+         ActionListener listener = new ActionListener() {
+			
+			public void actionPerformed(ActionEvent e) {
+				Object source = e.getSource();
+				boolean set = source == everythingButton;
+				int rowCount = dataModel.getRowCount();
+				for ( int row=0;row<rowCount;row++)
+				{
+					dataModel.setValueAt(new Boolean(set),row, selectCol );
+				}
+			}
+		};
+		everythingButton.addActionListener( listener);
+		nothingButton.addActionListener(listener);
          //pane.setPreferredSize( new Dimension(2000,800));
 		 DialogUI dialog2 = DialogUI.create(
                  getContext()
                  ,parentComponent
                  ,true
-                 ,pane
+                 ,content
                  ,new String[] {getString("ok"),getString("back")}
         );
 		 pane.setPreferredSize(new Dimension(1024, 700));
          dialog2.setDefault(0);
          dialog2.start();
-         if (dialog2.getSelectedIndex() == 0)
+
+         if ( dialog2.getSelectedIndex() == 0)
          {
-        	 for (int i=0;i<entries.size();i++)
-        	 {
-        		 Entry entry = entries.get(i);
-        		 Template template = (Template)table.getValueAt(i, header.length+1);
-        		 if ( template != null)
-        		 {
-        			 entry.template = template;
-        		 }
-        		 try {
-					entry.process();
-				} catch (Exception e) {
-					throw new RaplaException( e);
-				}
-        	 }
-         }
+		     try
+		     {
+		    	for (int i=0;i<entries.size();i++)
+		    	{
+		    		 Entry entry = entries.get(i);
+		    		 Boolean selected = (Boolean)table.getValueAt(i, selectCol);
+		    		 if ( selected == null || !selected)
+		    		 {
+		    			 continue;
+		    		 }
+		    		 Template template = (Template)table.getValueAt(i, templateCol);
+		    		 if ( template != null)
+		    		 {
+		    			 entry.template = template;
+		    		 }
+		    		 entry.process();
+				}		// TODO Auto-generated method stub
+			} catch (Exception ex) {
+			//	showException(ex,null);
+				throw new RaplaException(ex.getMessage(), ex);
+			}
+     	 }
+ 
+//         dialog2.getButton( 0 ).addActionListener( new ActionListener() {
+//			
+//			@Override
+//			public void actionPerformed(ActionEvent e) {
+//				SwingUtilities.invokeLater( new Runnable() {
+//					
+//					@Override
+//					public void run() {
+//						try {
+//						
+//					}
+//				}); 
+//							}
+//		});
          return;
 	}
 
