@@ -89,7 +89,7 @@ public class RaplaTemplateImport extends RaplaComponent implements RemoteMethodF
                         }
                         else
                         {
-                            string = object.toString();
+                            string = object.toString().trim();
                         }
                         map.put( column, string);
                     }
