@@ -430,7 +430,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
          for (int i = 0; i < entries.size(); i++)
          { 	 
         	 Entry row = entries.get(i);
-        	 tableContent[i][selectCol] = Boolean.TRUE;
+        	 
         	 for (int j = 0; j < header.length ; j++) 
         	 {
         		 Object object = row.get(header[j]);
@@ -439,8 +439,10 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
         			 tableContent[i][j+1] = object.toString();
         		 }
         	 }
-    		 tableContent[i][statusCol] = row.getStatus();
+    		 Status status = row.getStatus();
+    		 tableContent[i][statusCol] = status;
      		 tableContent[i][templateCol] = row.template;
+     		 tableContent[i][selectCol] = status != Status.aktuell && status != Status.template_waehlen && status != Status.template;
          }
 
          final JTable table = new JTable();
