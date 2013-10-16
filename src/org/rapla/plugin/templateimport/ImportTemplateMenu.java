@@ -28,6 +28,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.Vector;
 
 import javax.swing.AbstractCellEditor;
@@ -500,7 +501,8 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
          {
         	 TableColumn templateColumn = table.getColumnModel().getColumn( templateCol);
         	 templateColumn.setMinWidth(250);
-        	 templateColumn.setCellEditor( new JIDCellEditor(templateMap.values()));
+        	 Collection<Template> sortedTemplates = new TreeSet<Template>(templateMap.values());
+        	 templateColumn.setCellEditor( new JIDCellEditor(sortedTemplates));
          }
          final RaplaButton everythingButton = new RaplaButton(RaplaButton.SMALL);
          final RaplaButton  nothingButton = new RaplaButton(RaplaButton.SMALL);
