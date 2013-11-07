@@ -24,6 +24,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -160,9 +161,9 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 
 		private static final long serialVersionUID = 1L;
 		JComboBox jComboBox;
-	    Collection<Template> templates;
+	    Collection<String> templates;
 
-	    JIDCellEditor( Collection<Template> templates)
+	    JIDCellEditor( Collection<String> templates)
 	    {
 	    	this.templates = templates;	
 	    }
@@ -199,7 +200,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
     {
     	private Map<String, Object> entries;
     	private List<Entity<Reservation>> reservations = new ArrayList<Entity<Reservation>>();
-		private Template template;
+		private String template;
 		
 		
     	public Entry(Map<String, Object> entries) {
@@ -303,12 +304,27 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 				case template_waehlen: 
 					if ( template != null )
 					{
-					reservations= copy(template.getReservations(), getBeginn());map(reservations, entries) ;break;
+					reservations= copy(getTemplateReservations(), getBeginn());map(reservations, entries) ;break;
 					}
 					break;
-				case template: reservations= copy(template.getReservations(), getBeginn());map(reservations, entries) ;break;
+				case template: reservations= copy(getTemplateReservations(), getBeginn());map(reservations, entries) ;break;
 				case zu_loeschen: remove(reservations);break;
 			}
+		}
+
+		protected Collection<Reservation> getTemplateReservations() throws RaplaException {
+			ArrayList<Reservation> result = new ArrayList<Reservation>(); 
+			if ( template == null)
+			{
+				return result;
+			}
+			Collection<Template> templates = getQuery().getTemplates(Collections.singleton(template));
+			if ( templates.size() >0 )
+			{
+				Collection<Reservation> reservations = templates.iterator().next().getReservations();
+				result.addAll( reservations);
+			}
+			return result;
 		}
 
 		private void remove(List<Entity<Reservation>> reservations) throws RaplaException 
@@ -402,7 +418,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 		 Object[][] tableContent = new Object[entries.size()][header.length + 3];
          
          Map<String, List<Entity<Reservation>>> keyMap = getImportedReservations();
-         Map<String,Template> templateMap = getQuery().getTemplateMap();
+         Collection<String> templateMap = getQuery().getTemplateNames();
          for (int i = 0; i < entries.size(); i++)
          { 	 
         	 Entry row = entries.get(i);
@@ -417,11 +433,10 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
         	 if ( row.getReservations().size() == 0)
         	 {
         		 String key = (String) row.get(TemplateImport.TEMPLATE_KEY);
-        		 Template template = templateMap.get( key);
                   
-        		 if ( template != null)
+        		 if (  templateMap.contains( key ))
 	        	 {
-	        		 row.template = template;
+	        		 row.template = key;
 	        	 } 
         	 }
     	 }
@@ -501,7 +516,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
          {
         	 TableColumn templateColumn = table.getColumnModel().getColumn( templateCol);
         	 templateColumn.setMinWidth(250);
-        	 Collection<Template> sortedTemplates = new TreeSet<Template>(templateMap.values());
+        	 Collection<String> sortedTemplates = new TreeSet<String>(templateMap);
         	 templateColumn.setCellEditor( new JIDCellEditor(sortedTemplates));
          }
          final RaplaButton everythingButton = new RaplaButton(RaplaButton.SMALL);
@@ -560,7 +575,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 		    		 {
 		    			 continue;
 		    		 }
-		    		 Template template = (Template)table.getValueAt(i, templateCol);
+		    		 String template = (String)table.getValueAt(i, templateCol);
 		    		 if ( template != null)
 		    		 {
 		    			 entry.template = template;
