@@ -51,7 +51,6 @@ import org.rapla.components.util.SerializableDateTimeFormat;
 import org.rapla.entities.Entity;
 import org.rapla.entities.User;
 import org.rapla.entities.domain.Reservation;
-import org.rapla.entities.domain.Template;
 import org.rapla.entities.dynamictype.Attribute;
 import org.rapla.entities.dynamictype.Classification;
 import org.rapla.framework.RaplaContext;
@@ -313,18 +312,12 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 		}
 
 		protected Collection<Reservation> getTemplateReservations() throws RaplaException {
-			ArrayList<Reservation> result = new ArrayList<Reservation>(); 
 			if ( template == null)
 			{
-				return result;
+				return Collections.emptyList();
 			}
-			Collection<Template> templates = getQuery().getTemplates(Collections.singleton(template));
-			if ( templates.size() >0 )
-			{
-				Collection<Reservation> reservations = templates.iterator().next().getReservations();
-				result.addAll( reservations);
-			}
-			return result;
+			Collection<Reservation> reservations = getQuery().getTemplateReservations(template);
+			return reservations;
 		}
 
 		private void remove(List<Entity<Reservation>> reservations) throws RaplaException 
