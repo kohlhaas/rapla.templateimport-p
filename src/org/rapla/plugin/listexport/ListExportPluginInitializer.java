@@ -201,7 +201,7 @@ public class ListExportPluginInitializer extends RaplaGUIComponent implements Id
 		if(classification.getType() != obj)
 			return;
 		// Resource_Id
-		String allocatableId = RaplaDBExport.getShortId((RefEntity<?>) allc);
+		String allocatableId = RaplaDBExport.getShortId( allc);
 		out.append(allocatableId);
 				
 		Attribute[] attributes = classification.getAttributes();

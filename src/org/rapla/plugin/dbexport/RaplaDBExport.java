@@ -29,6 +29,7 @@ import org.rapla.components.xmlbundle.LocaleSelector;
 import org.rapla.components.xmlbundle.impl.I18nBundleImpl;
 import org.rapla.components.xmlbundle.impl.LocaleSelectorImpl;
 import org.rapla.entities.Category;
+import org.rapla.entities.Entity;
 import org.rapla.entities.EntityNotFoundException;
 import org.rapla.entities.User;
 import org.rapla.entities.domain.Allocatable;
@@ -286,7 +287,7 @@ public class RaplaDBExport  {
  */
 
         // Reservation_ID
-        String reservationdId = getShortId(((RefEntity)classifiable));
+        String reservationdId = getShortId(((Entity)classifiable));
         out.print(SEPARATOR + reservationdId);	
         
         // Reservation_Start_Date
@@ -306,7 +307,7 @@ public class RaplaDBExport  {
         //out.print(SEPARATOR + reservation.getName(locale));									  
 	}
  
-	public static String getShortId(RefEntity<?> refEntity) {
+	public static String getShortId(Entity refEntity) {
 	    Object id = refEntity.getId();
 	    if ( id != null)
 	    {
@@ -389,7 +390,7 @@ public class RaplaDBExport  {
 					//out.print(SEPARATOR + QUOTEBEFORE + classification.getType().getName(locale) + QUOTEAFTER);
 					
 					// Resource_Id
-					String allocatableId = getShortId(((RefEntity) alls[j]));
+					String allocatableId = getShortId(( alls[j]));
 
 					out.print(SEPARATOR + allocatableId);			
 				}

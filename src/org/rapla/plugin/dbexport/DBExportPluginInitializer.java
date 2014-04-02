@@ -21,6 +21,7 @@ import org.rapla.RaplaMainContainer;
 import org.rapla.components.iolayer.IOInterface;
 import org.rapla.components.util.DateTools;
 import org.rapla.entities.Category;
+import org.rapla.entities.Entity;
 import org.rapla.entities.User;
 import org.rapla.entities.domain.Allocatable;
 import org.rapla.entities.domain.Appointment;
@@ -33,7 +34,6 @@ import org.rapla.entities.dynamictype.Classifiable;
 import org.rapla.entities.dynamictype.Classification;
 import org.rapla.entities.dynamictype.ClassificationFilter;
 import org.rapla.entities.dynamictype.ConstraintIds;
-import org.rapla.entities.storage.RefEntity;
 import org.rapla.facade.CalendarModel;
 import org.rapla.facade.CalendarSelectionModel;
 import org.rapla.facade.ModificationModule;
@@ -358,7 +358,7 @@ public class DBExportPluginInitializer extends RaplaGUIComponent implements Iden
 // BJO 00000093
 */
         // Reservation_ID
-        String reservationdId = RaplaDBExport.getShortId((RefEntity)classifiable);
+        String reservationdId = RaplaDBExport.getShortId((Entity)classifiable);
         out.append(SEPARATOR + reservationdId);	
         
         // Reservation_Start_Date
@@ -465,7 +465,7 @@ public class DBExportPluginInitializer extends RaplaGUIComponent implements Iden
 					//out.append(SEPARATOR + QUOTEBEFORE + classification.getType().getName(locale) + QUOTEAFTER);
 					
 					// Resource_Id
-					String allocatableId = RaplaDBExport.getShortId( (RefEntity) alls[j]);
+					String allocatableId = RaplaDBExport.getShortId( alls[j]);
 
 					out.append(SEPARATOR + allocatableId);			
 				}

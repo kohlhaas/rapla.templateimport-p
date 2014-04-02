@@ -78,14 +78,15 @@ public class RaplaTemplateImport extends RaplaComponent implements RemoteMethodF
 
 							Date date = raplaLocale.toRaplaTime( raplaLocale.getImportExportTimeZone(),((Date) object));
 							string = formater.formatDate( date);
-                            if ( column.equals( TemplateImport.BEGIN_KEY))
-                            {
-                            	if ( date.before( getQuery().today()))
-                            	{
-                            		ignore = true;
-                            		break;
-                            	}
-                            }
+//                            if ( column.equals( TemplateImport.BEGIN_KEY))
+//                            {
+//                                //
+//                            	if ( date.before( getQuery().today()))
+//                            	{
+//                            		ignore = true;
+//                            		break;
+//                            	}
+//                            }
                         }
                         else
                         {

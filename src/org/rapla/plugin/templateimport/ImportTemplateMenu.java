@@ -48,9 +48,9 @@ import org.rapla.components.iolayer.FileContent;
 import org.rapla.components.iolayer.IOInterface;
 import org.rapla.components.util.DateTools;
 import org.rapla.components.util.SerializableDateTimeFormat;
-import org.rapla.entities.Entity;
 import org.rapla.entities.User;
 import org.rapla.entities.domain.Reservation;
+import org.rapla.entities.domain.ReservationAnnotations;
 import org.rapla.entities.dynamictype.Attribute;
 import org.rapla.entities.dynamictype.Classification;
 import org.rapla.framework.RaplaContext;
@@ -198,7 +198,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
     class Entry
     {
     	private Map<String, Object> entries;
-    	private List<Entity<Reservation>> reservations = new ArrayList<Entity<Reservation>>();
+    	private List<Reservation> reservations = new ArrayList<Reservation>();
 		private String template;
 		
 		
@@ -206,7 +206,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
     		this.entries = entries;
     	}
 
-    	public void setReservations( List<Entity<Reservation>> events)
+    	public void setReservations( List<Reservation> events)
     	{
     	    this.reservations = events;
     	}
@@ -303,10 +303,15 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 				case template_waehlen: 
 					if ( template != null )
 					{
-					reservations= copy(getTemplateReservations(), getBeginn());map(reservations, entries) ;break;
+						Collection<Reservation> templateReservations = getTemplateReservations();
+						reservations= copy(templateReservations, getBeginn());
+						map(reservations, entries) ;break;
 					}
 					break;
-				case template: reservations= copy(getTemplateReservations(), getBeginn());map(reservations, entries) ;break;
+				case template: 
+					Collection<Reservation> templateReservations = getTemplateReservations();
+					reservations= copy(templateReservations, getBeginn());
+					map(reservations, entries) ;break;
 				case zu_loeschen: remove(reservations);break;
 			}
 		}
@@ -320,18 +325,17 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 			return reservations;
 		}
 
-		private void remove(List<Entity<Reservation>> reservations) throws RaplaException 
+		private void remove(List<Reservation> reservations) throws RaplaException 
 		{
 			getModification().removeObjects( reservations.toArray( Reservation.RESERVATION_ARRAY));
 		}
 
-		private void map(List<Entity<Reservation>> reservations,Map<String, Object> entries) throws RaplaException 
+		private void map(List<Reservation> reservations,Map<String, Object> entries) throws RaplaException 
 		{
 			ArrayList<Reservation> toStore = new ArrayList<Reservation>();
-			Collection<Entity<Reservation>> editObjects = getModification().edit(reservations);
-			for (Entity<Reservation> edit: editObjects)
+			Collection<Reservation> editObjects = getModification().edit(reservations);
+			for (Reservation reservation: editObjects)
 			{
-				Reservation reservation = edit.cast();
 				map( reservation, entries);
 				toStore.add( reservation);
 			}
@@ -346,7 +350,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 				Object value = e.getValue();
 				if ( key.equals( TemplateImport.PRIMARY_KEY) && value != null)
 				{
-					reservation.setAnnotation(Reservation.EXTERNALID, value.toString());
+					reservation.setAnnotation(ReservationAnnotations.KEY_EXTERNALID, value.toString());
 				}
 				Attribute attribute = c.getAttribute( key );
 				if ( attribute != null && value!= null)
@@ -355,16 +359,16 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 					c.setValue( key, convertValue);
 				}
 			}
-			if ( reservation.getAnnotation( Reservation.EXTERNALID) == null)
+			if ( reservation.getAnnotation( ReservationAnnotations.KEY_EXTERNALID) == null)
 			{
 				throw new RaplaException("Primary Key [" + TemplateImport.PRIMARY_KEY + "] not set in row " + entries.toString()  );
 			}
 		}
 		
-		private boolean needsUpdate(List<Entity<Reservation>> events, Map<String, Object> entries) {
-			for ( Entity<Reservation> r:events)
+		private boolean needsUpdate(List<Reservation> events, Map<String, Object> entries) {
+			for ( Reservation r:events)
 			{
-				if ( needsUpdate( r.cast().getClassification(), entries))
+				if ( needsUpdate( r.getClassification(), entries))
 				{
 					return true;
 				}
@@ -401,7 +405,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 			return false;
 		}
 
-        public List<Entity<Reservation>> getReservations() {
+        public List<Reservation> getReservations() {
             return reservations;
         }
     }
@@ -410,14 +414,14 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
      
 		 Object[][] tableContent = new Object[entries.size()][header.length + 3];
          
-         Map<String, List<Entity<Reservation>>> keyMap = getImportedReservations();
+         Map<String, List<Reservation>> keyMap = getImportedReservations();
          Collection<String> templateMap = getQuery().getTemplateNames();
          for (int i = 0; i < entries.size(); i++)
          { 	 
         	 Entry row = entries.get(i);
         	 {
         		 String primaryKey = (String) row.get(TemplateImport.PRIMARY_KEY);
-        		 List<Entity<Reservation>> events = keyMap.get( primaryKey);
+        		 List<Reservation> events = keyMap.get( primaryKey);
         		 if ( events != null)
         		 {
         		     row.setReservations(events);
@@ -601,24 +605,24 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 
 
 
-	protected Map<String, List<Entity<Reservation>>> getImportedReservations()
+	protected Map<String, List<Reservation>> getImportedReservations()
 			throws RaplaException {
 		User user = null;
          Date start=getQuery().today();
          Date end = null;
-         Map<String,List<Entity<Reservation>>> keyMap = new LinkedHashMap<String, List<Entity<Reservation>>>();
+         Map<String,List<Reservation>> keyMap = new LinkedHashMap<String, List<Reservation>>();
 
          Reservation[] reservations = getQuery().getReservations(user, start, end, null);
          
          for ( Reservation r:reservations)
          {
-             String key = r.getAnnotation(Reservation.EXTERNALID);
+             String key = r.getAnnotation(ReservationAnnotations.KEY_EXTERNALID);
              if  ( key != null )
              {
-                 List<Entity<Reservation>> list = keyMap.get( key);
+                 List<Reservation> list = keyMap.get( key);
                  if ( list == null)
                  {
-                     list = new ArrayList<Entity<Reservation>>();
+                     list = new ArrayList<Reservation>();
                      keyMap.put( key, list);
                  }
                  list.add( r);
