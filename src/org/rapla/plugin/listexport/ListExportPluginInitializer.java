@@ -30,6 +30,7 @@ import org.rapla.components.iolayer.IOInterface;
 import org.rapla.components.util.DateTools;
 import org.rapla.entities.Category;
 import org.rapla.entities.RaplaObject;
+import org.rapla.entities.User;
 import org.rapla.entities.domain.Allocatable;
 import org.rapla.entities.dynamictype.Attribute;
 import org.rapla.entities.dynamictype.AttributeType;
@@ -98,15 +99,16 @@ public class ListExportPluginInitializer extends RaplaGUIComponent implements Id
     
     public void export(final CalendarModel model,final Component parentComponent) throws IOException,  RaplaException
     {
-    	SEPARATOR = getQuery().getPreferences(getUser()).getEntryAsString( DBExportOption.separator_CONFIG,DBExportOption.SEPARATOR_SEMICOLON);
-    	decimalpoint = getQuery().getPreferences(getUser()).getEntryAsString( DBExportOption.decimalpoint_CONFIG,DBExportOption.DECIMAL_POINT);
-    	dateformat = getQuery().getPreferences(getUser()).getEntryAsString( DBExportOption.dateformat_CONFIG,DBExportOption.FORMAT_YYYYMMDD);
-    	datetimeformat = getQuery().getPreferences(getUser()).getEntryAsString( DBExportOption.datetimeformat_CONFIG,DBExportOption.FORMAT_YYYYMMDDHHMMSS);
+    	User user = getUser();
+        SEPARATOR = getQuery().getPreferences(user).getEntryAsString( DBExportOption.separator_CONFIG,DBExportOption.SEPARATOR_SEMICOLON);
+    	decimalpoint = getQuery().getPreferences(user).getEntryAsString( DBExportOption.decimalpoint_CONFIG,DBExportOption.DECIMAL_POINT);
+    	dateformat = getQuery().getPreferences(user).getEntryAsString( DBExportOption.dateformat_CONFIG,DBExportOption.FORMAT_YYYYMMDD);
+    	datetimeformat = getQuery().getPreferences(user).getEntryAsString( DBExportOption.datetimeformat_CONFIG,DBExportOption.FORMAT_YYYYMMDDHHMMSS);
     	sdfdate = new SimpleDateFormat(dateformat,locale);
     	sdfdate.setTimeZone(DateTools.getTimeZone());
     	sdfdatetime = new SimpleDateFormat(datetimeformat,locale);
     	sdfdatetime.setTimeZone(DateTools.getTimeZone());
-    	QUOTEAFTER = QUOTEBEFORE = getQuery().getPreferences(getUser()).getEntryAsString( DBExportOption.quote_CONFIG,DBExportOption.QUOTE_NONE);
+    	QUOTEAFTER = QUOTEBEFORE = getQuery().getPreferences(user).getEntryAsString( DBExportOption.quote_CONFIG,DBExportOption.QUOTE_NONE);
     	
     	// Pass request for treatment
     	Collection<RaplaObject> selection = model.getSelectedObjects();

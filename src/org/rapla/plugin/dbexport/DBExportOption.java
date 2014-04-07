@@ -26,36 +26,37 @@ import org.rapla.components.layout.TableLayout;
 import org.rapla.entities.configuration.Preferences;
 import org.rapla.framework.RaplaContext;
 import org.rapla.framework.RaplaException;
+import org.rapla.framework.TypedComponentRole;
 import org.rapla.gui.OptionPanel;
 import org.rapla.gui.RaplaGUIComponent;
 
 public class DBExportOption extends RaplaGUIComponent implements OptionPanel {
 	
-	public final static String decimalpoint_CONFIG = "org.rapla.plugin.DBExportOption.decimalpoint";	
+	public final static TypedComponentRole<String> decimalpoint_CONFIG = new TypedComponentRole<String>("org.rapla.plugin.DBExportOption.decimalpoint");	
 	public final static String DECIMAL_POINT = ".";
 	public final static String DECIMAL_COMMA = ",";
 	
-	public final static String separator_CONFIG = "org.rapla.plugin.DBExportOption.separator";
+	public final static TypedComponentRole<String> separator_CONFIG = new TypedComponentRole<String>("org.rapla.plugin.DBExportOption.separator");
 	public final static String SEPARATOR_SPACE = " ";
 	public final static String SEPARATOR_SEMICOLON = ";";
 	public final static String SEPARATOR_COMMA = ",";
 	public final static String SEPARATOR_PIPE = "|";
 	public final static String SEPARATOR_COLON = ":";
 	
-	public final static String dateformat_CONFIG = "org.rapla.plugin.DBExportOption.dateformat";
+	public final static TypedComponentRole<String> dateformat_CONFIG = new TypedComponentRole<String>("org.rapla.plugin.DBExportOption.dateformat");
 	public final static String FORMAT_YYYYMMDD = "yyyy-MM-dd";
 	public final static String FORMAT_DDMMYYYY = "dd-MM-yyyy";
 
-	public final static String datetimeformat_CONFIG = "org.rapla.plugin.DBExportOption.datetimeformat";
+	public final static TypedComponentRole<String> datetimeformat_CONFIG = new TypedComponentRole<String>("org.rapla.plugin.DBExportOption.datetimeformat");
 	public final static String FORMAT_YYYYMMDDHHMMSS = "yyyy-MM-dd HH:mm:ss";
 	public final static String FORMAT_DDMMYYYHHMMSS = "dd-MM-yyyy HH:mm:ss";
 
-	public final static String quote_CONFIG = "org.rapla.plugin.DBExportOption.quote";
+	public final static TypedComponentRole<String> quote_CONFIG = new TypedComponentRole<String>("org.rapla.plugin.DBExportOption.quote");
 	public final static String QUOTE_NONE = "";
 	public final static String QUOTE_APOST = "'";
 	public final static String QUOTE_DOUBLE = "\"";
 	
-	public final static String removeChars_CONFIG = "org.rapla.plugin.DBExportOption.removechars";
+	public final static TypedComponentRole<String> removeChars_CONFIG = new TypedComponentRole<String>("org.rapla.plugin.DBExportOption.removechars");
 		
     Preferences preferences;
     String DBExport = "org.rapla.plugin.dbexport.DBExport";

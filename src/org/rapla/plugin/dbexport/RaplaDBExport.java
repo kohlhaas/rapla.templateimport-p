@@ -135,16 +135,17 @@ public class RaplaDBExport  {
     
 	public static int export(Date startDate, Date endDate, ClassificationFilter[] filter) throws IOException, RaplaException
     {
-    	SEPARATOR = facade.getPreferences(facade.getUser()).getEntryAsString( DBExportOption.separator_CONFIG,DBExportOption.SEPARATOR_SEMICOLON);
-    	decimalpoint = facade.getPreferences(facade.getUser()).getEntryAsString( DBExportOption.decimalpoint_CONFIG,DBExportOption.DECIMAL_POINT);
-    	dateformat = facade.getPreferences(facade.getUser()).getEntryAsString( DBExportOption.dateformat_CONFIG,DBExportOption.FORMAT_YYYYMMDD);
-    	datetimeformat = facade.getPreferences(facade.getUser()).getEntryAsString( DBExportOption.datetimeformat_CONFIG,DBExportOption.FORMAT_YYYYMMDDHHMMSS);
+    	User user = facade.getUser();
+        SEPARATOR = facade.getPreferences(user).getEntryAsString( DBExportOption.separator_CONFIG,DBExportOption.SEPARATOR_SEMICOLON);
+    	decimalpoint = facade.getPreferences(user).getEntryAsString( DBExportOption.decimalpoint_CONFIG,DBExportOption.DECIMAL_POINT);
+    	dateformat = facade.getPreferences(user).getEntryAsString( DBExportOption.dateformat_CONFIG,DBExportOption.FORMAT_YYYYMMDD);
+    	datetimeformat = facade.getPreferences(user).getEntryAsString( DBExportOption.datetimeformat_CONFIG,DBExportOption.FORMAT_YYYYMMDDHHMMSS);
     	sdfdate = new SimpleDateFormat(dateformat,locale);
     	sdfdate.setTimeZone(DateTools.getTimeZone());
     	sdfdatetime = new SimpleDateFormat(datetimeformat,locale);
     	sdfdatetime.setTimeZone(DateTools.getTimeZone());
-    	QUOTEAFTER = QUOTEBEFORE = facade.getPreferences(facade.getUser()).getEntryAsString( DBExportOption.quote_CONFIG,DBExportOption.QUOTE_NONE);
-    	removeChars = facade.getPreferences(facade.getUser()).getEntryAsString( DBExportOption.removeChars_CONFIG,SEPARATOR);
+    	QUOTEAFTER = QUOTEBEFORE = facade.getPreferences(user).getEntryAsString( DBExportOption.quote_CONFIG,DBExportOption.QUOTE_NONE);
+    	removeChars = facade.getPreferences(user).getEntryAsString( DBExportOption.removeChars_CONFIG,SEPARATOR);
 
     	List<AppointmentBlock> blocks = getBlocksForRequest(startDate, endDate, filter); 
     	if(blocks.size()==0) {
@@ -512,7 +513,7 @@ public class RaplaDBExport  {
 			DateFormat sdfyyyyMMdd = new SimpleDateFormat("yyyyMMdd");
 			if(workDir.isEmpty())
 				workDir = System.getProperty("user.dir");
-			final String calendarName = facade.getPreferences( null ).getEntryAsString(RaplaMainContainer.TITLE, i18n.getString("rapla.title"));
+			final String calendarName = facade.getSystemPreferences().getEntryAsString(RaplaMainContainer.TITLE, i18n.getString("rapla.title"));
             String fileName = workDir + System.getProperty("file.separator") + calendarName + "-" + sdfyyyyMMdd.format( startDate ) + ".csv";
 			FileOutputStream fstream = new FileOutputStream(fileName);
             logger.info("Producing: " + fileName);			

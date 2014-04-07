@@ -109,16 +109,17 @@ public class DBExportPluginInitializer extends RaplaGUIComponent implements Iden
     
     public void export(final CalendarModel model) throws IOException,  RaplaException
     {
-    	SEPARATOR = getQuery().getPreferences(getUser()).getEntryAsString( DBExportOption.separator_CONFIG,DBExportOption.SEPARATOR_SEMICOLON);
-    	decimalpoint = getQuery().getPreferences(getUser()).getEntryAsString( DBExportOption.decimalpoint_CONFIG,DBExportOption.DECIMAL_POINT);
-    	dateformat = getQuery().getPreferences(getUser()).getEntryAsString( DBExportOption.dateformat_CONFIG,DBExportOption.FORMAT_YYYYMMDD);
-    	datetimeformat = getQuery().getPreferences(getUser()).getEntryAsString( DBExportOption.datetimeformat_CONFIG,DBExportOption.FORMAT_YYYYMMDDHHMMSS);
+    	User user = getUser();
+        SEPARATOR = getQuery().getPreferences(user).getEntryAsString( DBExportOption.separator_CONFIG,DBExportOption.SEPARATOR_SEMICOLON);
+    	decimalpoint = getQuery().getPreferences(user).getEntryAsString( DBExportOption.decimalpoint_CONFIG,DBExportOption.DECIMAL_POINT);
+    	dateformat = getQuery().getPreferences(user).getEntryAsString( DBExportOption.dateformat_CONFIG,DBExportOption.FORMAT_YYYYMMDD);
+    	datetimeformat = getQuery().getPreferences(user).getEntryAsString( DBExportOption.datetimeformat_CONFIG,DBExportOption.FORMAT_YYYYMMDDHHMMSS);
     	sdfdate = new SimpleDateFormat(dateformat,locale);
     	sdfdate.setTimeZone(DateTools.getTimeZone());
     	sdfdatetime = new SimpleDateFormat(datetimeformat,locale);
     	sdfdatetime.setTimeZone(DateTools.getTimeZone());
-    	QUOTEAFTER = QUOTEBEFORE = getQuery().getPreferences(getUser()).getEntryAsString( DBExportOption.quote_CONFIG,DBExportOption.QUOTE_NONE);
-    	removeChars = getQuery().getPreferences(getUser()).getEntryAsString( DBExportOption.removeChars_CONFIG,SEPARATOR);
+    	QUOTEAFTER = QUOTEBEFORE = getQuery().getPreferences(user).getEntryAsString( DBExportOption.quote_CONFIG,DBExportOption.QUOTE_NONE);
+    	removeChars = getQuery().getPreferences(user).getEntryAsString( DBExportOption.removeChars_CONFIG,SEPARATOR);
 
     	// Pass request for treatment
 /*
