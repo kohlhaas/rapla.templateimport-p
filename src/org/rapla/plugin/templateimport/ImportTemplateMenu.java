@@ -50,7 +50,7 @@ import org.rapla.components.util.DateTools;
 import org.rapla.components.util.SerializableDateTimeFormat;
 import org.rapla.entities.User;
 import org.rapla.entities.domain.Reservation;
-import org.rapla.entities.domain.ReservationAnnotations;
+import org.rapla.entities.domain.RaplaObjectAnnotations;
 import org.rapla.entities.dynamictype.Attribute;
 import org.rapla.entities.dynamictype.Classification;
 import org.rapla.framework.RaplaContext;
@@ -350,7 +350,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 				Object value = e.getValue();
 				if ( key.equals( TemplateImport.PRIMARY_KEY) && value != null)
 				{
-					reservation.setAnnotation(ReservationAnnotations.KEY_EXTERNALID, value.toString());
+					reservation.setAnnotation(RaplaObjectAnnotations.KEY_EXTERNALID, value.toString());
 				}
 				Attribute attribute = c.getAttribute( key );
 				if ( attribute != null && value!= null)
@@ -359,7 +359,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 					c.setValue( key, convertValue);
 				}
 			}
-			if ( reservation.getAnnotation( ReservationAnnotations.KEY_EXTERNALID) == null)
+			if ( reservation.getAnnotation( RaplaObjectAnnotations.KEY_EXTERNALID) == null)
 			{
 				throw new RaplaException("Primary Key [" + TemplateImport.PRIMARY_KEY + "] not set in row " + entries.toString()  );
 			}
@@ -616,7 +616,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
          
          for ( Reservation r:reservations)
          {
-             String key = r.getAnnotation(ReservationAnnotations.KEY_EXTERNALID);
+             String key = r.getAnnotation(RaplaObjectAnnotations.KEY_EXTERNALID);
              if  ( key != null )
              {
                  List<Reservation> list = keyMap.get( key);
