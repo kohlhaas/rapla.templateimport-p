@@ -1,11 +1,11 @@
 package org.rapla.plugin.templateimport.server;
 
-import java.io.StringWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -14,16 +14,15 @@ import org.rapla.components.util.SerializableDateTimeFormat;
 import org.rapla.facade.RaplaComponent;
 import org.rapla.framework.RaplaContext;
 import org.rapla.framework.RaplaException;
-import org.rapla.framework.RaplaLocale;
+import org.rapla.plugin.templateimport.ParsedTemplateResult;
 import org.rapla.plugin.templateimport.TemplateImport;
 import org.rapla.server.RemoteMethodFactory;
 import org.rapla.server.RemoteSession;
+import org.rapla.server.TimeZoneConverter;
 import org.rapla.storage.StorageOperator;
 import org.rapla.storage.dbsql.DBOperator;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ift.CellProcessor;
-import org.supercsv.io.CsvMapWriter;
-import org.supercsv.prefs.CsvPreference;
 
 
 public class RaplaTemplateImport extends RaplaComponent implements RemoteMethodFactory<TemplateImport> , TemplateImport{
@@ -32,13 +31,11 @@ public class RaplaTemplateImport extends RaplaComponent implements RemoteMethodF
         super(context);
     }
 
-    public String importFromServer() throws RaplaException
+    public ParsedTemplateResult importFromServer() throws RaplaException
     {
-        RaplaLocale raplaLocale = getRaplaLocale();
-        StringWriter stringWriter = new StringWriter();
-        CsvMapWriter writer = new CsvMapWriter(stringWriter, CsvPreference.STANDARD_PREFERENCE);
+        TimeZoneConverter converter = getContext().lookup( TimeZoneConverter.class);
         DBOperator operator = (DBOperator) getClientFacade().getOperator();
-        
+        ParsedTemplateResult result = new ParsedTemplateResult();
         Connection connection = null;
         try 
         {
@@ -54,7 +51,7 @@ public class RaplaTemplateImport extends RaplaComponent implements RemoteMethodF
                 String column = metaData.getColumnName( i+1);
                 header[i] = column;
             }
-            writer.writeHeader(header);
+            result.setHeader(Arrays.asList(header));
             final CellProcessor[] processors = new CellProcessor[header.length];
             for ( int i=0;i<processors.length;i++)
             {
@@ -75,8 +72,7 @@ public class RaplaTemplateImport extends RaplaComponent implements RemoteMethodF
                         if (object instanceof Date)
                         {
                             SerializableDateTimeFormat formater = getRaplaLocale().getSerializableFormat();
-
-							Date date = raplaLocale.toRaplaTime( raplaLocale.getImportExportTimeZone(),((Date) object));
+                            Date date = converter.toRaplaTime( converter.getImportExportTimeZone(),((Date) object));
 							string = formater.formatDate( date);
 //                            if ( column.equals( TemplateImport.BEGIN_KEY))
 //                            {
@@ -97,13 +93,11 @@ public class RaplaTemplateImport extends RaplaComponent implements RemoteMethodF
                 }   
                 if ( !ignore)
                 {
-                	writer.write( map, header , processors);
+                    result.addTemplate(map);
                 }
-                writer.flush();
                 count++;
             }
-            writer.close();
-            stringWriter.close();
+            getLogger().debug("Found " + count + " Entries ");
             
         } catch (Exception e) {
             throw new RaplaException("Error importing from database", e);
@@ -120,7 +114,6 @@ public class RaplaTemplateImport extends RaplaComponent implements RemoteMethodF
             }     
         }
        
-        String result = stringWriter.getBuffer().toString();
         return result;
     }
 
