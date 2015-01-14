@@ -57,7 +57,6 @@ import org.rapla.entities.dynamictype.Classification;
 import org.rapla.framework.RaplaContext;
 import org.rapla.framework.RaplaException;
 import org.rapla.gui.RaplaGUIComponent;
-import org.rapla.gui.internal.common.NamedListCellRenderer;
 import org.rapla.gui.toolkit.DialogUI;
 import org.rapla.gui.toolkit.IdentifiableMenuEntry;
 import org.rapla.gui.toolkit.RaplaButton;
@@ -213,7 +212,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 	        Vector vector = new Vector();
 	        vector.addAll( templates);
 	        jComboBox = new JComboBox(vector);
-	        jComboBox.setRenderer( new NamedListCellRenderer(getLocale()));
+	        jComboBox.setRenderer( new org.rapla.gui.internal.common.NamedListCellRenderer(getLocale()));
 	        jComboBox.setSelectedItem(value);
 	        jComboBox.addActionListener( this);
 	        return jComboBox;

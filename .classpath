@@ -19,6 +19,9 @@
 			<accessrule kind="accessible" pattern="org/rapla/servletpages/*"/>
 			<accessrule kind="accessible" pattern="org/rapla/plugin/abstractcalendar/*"/>
 			<accessrule kind="accessible" pattern="org/rapla/components/iolayer/*"/>
+			<accessrule kind="accessible" pattern="org/rapla/storage/StorageOperator"/>
+			<accessrule kind="accessible" pattern="org/rapla/rest/gwtjsonrpc/common/RemoteJsonService"/>
+			<accessrule kind="accessible" pattern="org/rapla/storage/dbsql/DBOperator*"/>
 			<accessrule kind="discouraged" pattern="org/rapla/**"/>
 			<accessrule kind="nonaccessible" pattern="**"/>
 		</accessrules>
