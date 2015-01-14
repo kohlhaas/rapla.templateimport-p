@@ -363,9 +363,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 				return Collections.emptyList();
 			}
 			Collection<Reservation> reservations = getQuery().getTemplateReservations(template);
-			ArrayList<Reservation> sorted = new ArrayList<Reservation>(reservations);
-			Collections.sort( sorted, new NamedComparator<Reservation>( getRaplaLocale().getLocale()));
-			return sorted;
+			return reservations;
 		}
 
 		private void remove(List<Reservation> reservations) throws RaplaException 
@@ -564,7 +562,8 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
          {
         	 TableColumn templateColumn = table.getColumnModel().getColumn( templateCol);
         	 templateColumn.setMinWidth(250);
-        	 Collection<Allocatable> sortedTemplates = new TreeSet<Allocatable>(templates);
+        	 Collection<Allocatable> sortedTemplates = new TreeSet<Allocatable>( new NamedComparator<Allocatable>(getRaplaLocale().getLocale()));
+        	 sortedTemplates.addAll( templates);
         	 templateColumn.setCellRenderer( new NamedTableCellRenderer());
         	 templateColumn.setCellEditor( new JIDCellEditor(sortedTemplates));
          }
