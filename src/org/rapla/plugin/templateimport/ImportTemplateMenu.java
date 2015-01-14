@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------*
- | Copyright (C) 2006 Christopher Kohlhaas                                  |
+ | Copyright (C) 2014 Christopher Kohlhaas                                  |
  |                                                                          |
  | This program is free software; you can redistribute it and/or modify     |
  | it under the terms of the GNU General Public License as published by the |
@@ -17,17 +17,16 @@ import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.Vector;
@@ -40,39 +39,39 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
 
-import org.rapla.components.iolayer.FileContent;
-import org.rapla.components.iolayer.IOInterface;
 import org.rapla.components.util.DateTools;
 import org.rapla.components.util.SerializableDateTimeFormat;
+import org.rapla.entities.Named;
+import org.rapla.entities.NamedComparator;
 import org.rapla.entities.User;
-import org.rapla.entities.domain.Reservation;
+import org.rapla.entities.domain.Allocatable;
 import org.rapla.entities.domain.RaplaObjectAnnotations;
+import org.rapla.entities.domain.Reservation;
 import org.rapla.entities.dynamictype.Attribute;
 import org.rapla.entities.dynamictype.Classification;
 import org.rapla.framework.RaplaContext;
 import org.rapla.framework.RaplaException;
 import org.rapla.gui.RaplaGUIComponent;
+import org.rapla.gui.internal.common.NamedListCellRenderer;
 import org.rapla.gui.toolkit.DialogUI;
 import org.rapla.gui.toolkit.IdentifiableMenuEntry;
 import org.rapla.gui.toolkit.RaplaButton;
-import org.supercsv.cellprocessor.Optional;
-import org.supercsv.cellprocessor.ift.CellProcessor;
-import org.supercsv.io.CsvMapReader;
-import org.supercsv.io.ICsvMapReader;
-import org.supercsv.prefs.CsvPreference;
 
 
 public class ImportTemplateMenu extends RaplaGUIComponent implements IdentifiableMenuEntry,ActionListener
 {
 	String id = "events into templates";
 	JMenuItem item; 
-	public ImportTemplateMenu(RaplaContext sm)  {
-        super(sm);
-       
+	TemplateImport importService;
+	
+	public ImportTemplateMenu(RaplaContext sm, TemplateImport importService)  {
+	    super(sm);
+	    this.importService = importService;
         setChildBundleName( ImportTemplatePlugin.RESOURCE_FILE);
         
 		item = new JMenuItem( id );
@@ -88,81 +87,119 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 		return id;
 	}
 
-	 public void actionPerformed(ActionEvent evt) {
-         try {
-             Reader reader = null;
-             TemplateImport importService = null;
-             try
-             {
-                 importService = getWebservice( TemplateImport.class);
-             }
-             catch (Exception ex)
-             {
-                 
-             }
-             final Frame frame = (Frame) SwingUtilities.getRoot(getMainComponent());
-             if ( importService != null && importService.hasDBConnection())
-             {
-                 reader = new StringReader( importService.importFromServer());
-             }
-             else
-             {
-                 IOInterface io =  getService( IOInterface.class);
-                 FileContent file = io.openFile( frame, null, new String[] {".csv"});
-                 if ( file != null) 
-                 {
-                     reader = new InputStreamReader( file.getInputStream());
-                     //String[][] entries = Tools.csvRead( reader, ',',1 ); // read first 5 colums per input row and store in memory
-                 }
-                 
-             }
-             
-             if ( reader != null)
-             {
-                 ICsvMapReader mapReader = null;
-                 List<Entry> list=new ArrayList<Entry>();
-                 try {
-                     mapReader = new CsvMapReader(reader, CsvPreference.STANDARD_PREFERENCE);
-                     
-                     // the header columns are used as the keys to the Map
-                     final String[] header = mapReader.getHeader(true);
-                     final CellProcessor[] processors = new CellProcessor[header.length];
-                     for ( int i=0;i<processors.length;i++)
-                     {
-                         processors[i]= new Optional();
-                     }
-                     
-                     Map<String, Object> customerMap;
-                     while( (customerMap = mapReader.read(header, processors)) != null ) 
-                     {
-                          Entry e = new Entry(customerMap);
-	                      Date beginn = e.getBeginn();
-	                      if ( beginn != null && beginn.after( getQuery().today()))
-	                      {
-	                    	  list.add(e);
-	                      }
-                     }
-                     confirmImport(frame, header, list);
-                 }
-                 finally {
-                     if( mapReader != null ) {
-                         mapReader.close();
-                     }
-                 }
-             }
-             
-          } catch (Exception ex) {
-             showException( ex, getMainComponent() );
-         }
-    }
+
+  public void actionPerformed(ActionEvent evt) {
+        try {
+            final Frame frame = (Frame) SwingUtilities.getRoot(getMainComponent());
+            if ( !importService.hasDBConnection())
+            {
+                throw new RaplaException("Only input from db supported. Is db activated?");
+            }
+            ParsedTemplateResult result = importService.importFromServer();
+            String[] header = result.getHeader().toArray(new String[]{});
+            List<Map<String,String>> list = result.getTemplateList();
+            List<Entry> entryList = new ArrayList<Entry>();
+            for (Map<String,String> row:list)
+            {
+                Entry e = new Entry(row);
+                entryList.add(e);
+//              
+            }
+            confirmImport(frame, header, entryList);
+        } catch (Exception ex) {
+            showException( ex, getMainComponent() );
+        }
+  }
+
+  //	 public void actionPerformed(ActionEvent evt) {
+//         try {
+//             Reader reader = null;
+//             final Frame frame = (Frame) SwingUtilities.getRoot(getMainComponent());
+//             if ( importService.hasDBConnection())
+//             {
+//                 reader = new StringReader( importService.importFromServer());
+//             }
+//             else
+//             {
+//                 IOInterface io =  getService( IOInter1face.class);
+//                 FileContent file = io.openFile( frame, null, new String[] {".csv"});
+//                 if ( file != null) 
+//                 {
+//                     reader = new InputStreamReader( file.getInputStream());
+//                     //String[][] entries = Tools.csvRead( reader, ',',1 ); // read first 5 colums per input row and store in memory
+//                 }
+//                 
+//             }
+//             
+//             if ( reader != null)
+//             {
+//                 ICsvMapReader mapReader = null;
+//                 List<Entry> list=new ArrayList<Entry>();
+//                 try {
+//                     mapReader = new CsvMapReader(reader, CsvPreference.STANDARD_PREFERENCE);
+//                     
+//                     // the header columns are used as the keys to the Map
+//                     final String[] header = mapReader.getHeader(true);
+//                     final CellProcessor[] processors = new CellProcessor[header.length];
+//                     for ( int i=0;i<processors.length;i++)
+//                     {
+//                         processors[i]= new Optional();
+//                     }
+//                     
+//                     Map<String, Object> customerMap;
+//                     while( (customerMap = mapReader.read(header, processors)) != null ) 
+//                     {
+//                          Entry e = new Entry(customerMap);
+//	                      Date beginn = e.getBeginn();
+//	                      if ( beginn != null && beginn.after( getQuery().today()))
+//	                      {
+//	                    	  list.add(e);
+//	                      }
+//                     }
+//                     confirmImport(frame, header, list);
+//                 }
+//                 finally {
+//                     if( mapReader != null ) {
+//                         mapReader.close();
+//                     }
+//                 }
+//             }
+//             
+//          } catch (Exception ex) {
+//             showException( ex, getMainComponent() );
+//         }
+//    }
     
+	 public class NamedTableCellRenderer extends DefaultTableCellRenderer {
+
+	     private static final long serialVersionUID = 1L;
+
+	     
+	     private Locale locale;
+
+	     {
+	         locale = getLocale();
+	     }
+	     
+	     @Override
+	     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+	         if ( value instanceof Named)
+	         {
+	             value = ((Named)value).getName(locale);
+	         }
+	         return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+	     }
+
+	 }
+
+	 
 	 public class JIDCellEditor extends AbstractCellEditor implements TableCellEditor, ActionListener {
 
 		private static final long serialVersionUID = 1L;
 		JComboBox jComboBox;
-	    Collection<String> templates;
+	    Collection<Allocatable> templates;
 
-	    JIDCellEditor( Collection<String> templates)
+	    JIDCellEditor( Collection<Allocatable> templates)
 	    {
 	    	this.templates = templates;	
 	    }
@@ -171,10 +208,12 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 	        return jComboBox.getSelectedItem();
 	    }
 
-	    public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+	    @SuppressWarnings({ "unchecked", "restriction" })
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
 	        Vector vector = new Vector();
 	        vector.addAll( templates);
 	        jComboBox = new JComboBox(vector);
+	        jComboBox.setRenderer( new NamedListCellRenderer(getLocale()));
 	        jComboBox.setSelectedItem(value);
 	        jComboBox.addActionListener( this);
 	        return jComboBox;
@@ -197,12 +236,12 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 
     class Entry
     {
-    	private Map<String, Object> entries;
+    	private Map<String, String> entries;
     	private List<Reservation> reservations = new ArrayList<Reservation>();
-		private String template;
+		private Allocatable template;
 		
 		
-    	public Entry(Map<String, Object> entries) {
+    	public Entry(Map<String, String> entries) {
     		this.entries = entries;
     	}
 
@@ -213,7 +252,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
     	
     	public Date getBeginn() throws Exception
     	{
-            String dateString = (String)entries.get(TemplateImport.BEGIN_KEY);
+            String dateString = entries.get(TemplateImport.BEGIN_KEY);
     		if (dateString != null)
     		{
     		    Date parse;
@@ -313,6 +352,9 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 					reservations= copy(templateReservations, getBeginn());
 					map(reservations, entries) ;break;
 				case zu_loeschen: remove(reservations);break;
+                case datum_fehlerhaft:  
+                case datum_fehlt: 
+                case aktuell: break;    
 			}
 		}
 
@@ -322,7 +364,9 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 				return Collections.emptyList();
 			}
 			Collection<Reservation> reservations = getQuery().getTemplateReservations(template);
-			return reservations;
+			ArrayList<Reservation> sorted = new ArrayList<Reservation>(reservations);
+			Collections.sort( sorted, new NamedComparator<Reservation>( getRaplaLocale().getLocale()));
+			return sorted;
 		}
 
 		private void remove(List<Reservation> reservations) throws RaplaException 
@@ -330,7 +374,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 			getModification().removeObjects( reservations.toArray( Reservation.RESERVATION_ARRAY));
 		}
 
-		private void map(List<Reservation> reservations,Map<String, Object> entries) throws RaplaException 
+		private void map(List<Reservation> reservations,Map<String, String> entries) throws RaplaException 
 		{
 			ArrayList<Reservation> toStore = new ArrayList<Reservation>();
 			Collection<Reservation> editObjects = getModification().edit(reservations);
@@ -342,12 +386,12 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 			getModification().storeObjects( toStore.toArray( Reservation.RESERVATION_ARRAY));
 		}
 
-		private void map(Reservation reservation,Map<String, Object> entries) throws RaplaException {
+		private void map(Reservation reservation,Map<String, String> entries) throws RaplaException {
 			Classification c = reservation.getClassification();
-			for (Map.Entry<String, Object> e: entries.entrySet())
+			for (Map.Entry<String, String> e: entries.entrySet())
 			{
 				String key = e.getKey();
-				Object value = e.getValue();
+				String value = e.getValue();
 				if ( key.equals( TemplateImport.PRIMARY_KEY) && value != null)
 				{
 					reservation.setAnnotation(RaplaObjectAnnotations.KEY_EXTERNALID, value.toString());
@@ -365,7 +409,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 			}
 		}
 		
-		private boolean needsUpdate(List<Reservation> events, Map<String, Object> entries) {
+		private boolean needsUpdate(List<Reservation> events, Map<String, String> entries) {
 			for ( Reservation r:events)
 			{
 				if ( needsUpdate( r.getClassification(), entries))
@@ -376,8 +420,8 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 			return false;
 		}
 		
-		private boolean needsUpdate(Classification c, Map<String, Object> entries) {
-			for (Map.Entry<String, Object> e: entries.entrySet())
+		private boolean needsUpdate(Classification c, Map<String, String> entries) {
+			for (Map.Entry<String, String> e: entries.entrySet())
 			{
 				String key = e.getKey();
 				Object value = e.getValue();
@@ -415,7 +459,13 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 		 Object[][] tableContent = new Object[entries.size()][header.length + 3];
          
          Map<String, List<Reservation>> keyMap = getImportedReservations();
-         Collection<String> templateMap = getQuery().getTemplateNames();
+         Collection<Allocatable> templates = getQuery().getTemplates();
+         Map<String, Allocatable> templateMap = new HashMap<String, Allocatable>();
+         for ( Allocatable template:templates)
+         {
+             templateMap.put( template.getName(getLocale()), template);
+         }
+         
          for (int i = 0; i < entries.size(); i++)
          { 	 
         	 Entry row = entries.get(i);
@@ -431,9 +481,10 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
         	 {
         		 String key = (String) row.get(TemplateImport.TEMPLATE_KEY);
                   
-        		 if (  templateMap.contains( key ))
+        		 Allocatable allocatable = templateMap.get( key );
+                if (  allocatable != null)
 	        	 {
-	        		 row.template = key;
+	        		 row.template = allocatable;
 	        	 } 
         	 }
     	 }
@@ -474,7 +525,8 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
          System.arraycopy(header, 0, newHeader, 1, header.length);
          newHeader[statusCol] = "status";
          newHeader[templateCol] = "template";
-         final DefaultTableModel dataModel = new DefaultTableModel(tableContent, newHeader)
+         @SuppressWarnings("serial")
+        final DefaultTableModel dataModel = new DefaultTableModel(tableContent, newHeader)
          {
         	@Override
         	public boolean isCellEditable(int row, int column) {
@@ -513,7 +565,8 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
          {
         	 TableColumn templateColumn = table.getColumnModel().getColumn( templateCol);
         	 templateColumn.setMinWidth(250);
-        	 Collection<String> sortedTemplates = new TreeSet<String>(templateMap);
+        	 Collection<Allocatable> sortedTemplates = new TreeSet<Allocatable>(templates);
+        	 templateColumn.setCellRenderer( new NamedTableCellRenderer());
         	 templateColumn.setCellEditor( new JIDCellEditor(sortedTemplates));
          }
          final RaplaButton everythingButton = new RaplaButton(RaplaButton.SMALL);
@@ -572,7 +625,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 		    		 {
 		    			 continue;
 		    		 }
-		    		 String template = (String)table.getValueAt(i, templateCol);
+		    		 Allocatable template = (Allocatable)table.getValueAt(i, templateCol);
 		    		 if ( template != null)
 		    		 {
 		    			 entry.template = template;
