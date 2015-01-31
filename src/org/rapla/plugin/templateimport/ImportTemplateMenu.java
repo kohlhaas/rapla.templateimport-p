@@ -236,9 +236,8 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
     class Entry
     {
     	private Map<String, String> entries;
-    	private List<Reservation> reservations = new ArrayList<Reservation>();
+    	private Collection<Reservation> reservations = new ArrayList<Reservation>();
 		private Allocatable template;
-		
 		
     	public Entry(Map<String, String> entries) {
     		this.entries = entries;
@@ -342,13 +341,13 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 					if ( template != null )
 					{
 						Collection<Reservation> templateReservations = getTemplateReservations();
-						reservations= copy(templateReservations, getBeginn());
+						reservations= copy(templateReservations, getBeginn(), true);
 						map(reservations, entries) ;break;
 					}
 					break;
 				case template: 
 					Collection<Reservation> templateReservations = getTemplateReservations();
-					reservations= copy(templateReservations, getBeginn());
+					reservations= copy(templateReservations, getBeginn(), true);
 					map(reservations, entries) ;break;
 				case zu_loeschen: remove(reservations);break;
                 case datum_fehlerhaft:  
@@ -366,12 +365,12 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 			return reservations;
 		}
 
-		private void remove(List<Reservation> reservations) throws RaplaException 
+		private void remove(Collection<Reservation> reservations) throws RaplaException 
 		{
 			getModification().removeObjects( reservations.toArray( Reservation.RESERVATION_ARRAY));
 		}
 
-		private void map(List<Reservation> reservations,Map<String, String> entries) throws RaplaException 
+		private void map(Collection<Reservation> reservations,Map<String, String> entries) throws RaplaException 
 		{
 			ArrayList<Reservation> toStore = new ArrayList<Reservation>();
 			Collection<Reservation> editObjects = getModification().edit(reservations);
@@ -406,7 +405,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 			}
 		}
 		
-		private boolean needsUpdate(List<Reservation> events, Map<String, String> entries) {
+		private boolean needsUpdate(Collection<Reservation> events, Map<String, String> entries) {
 			for ( Reservation r:events)
 			{
 				if ( needsUpdate( r.getClassification(), entries))
@@ -446,7 +445,7 @@ public class ImportTemplateMenu extends RaplaGUIComponent implements Identifiabl
 			return false;
 		}
 
-        public List<Reservation> getReservations() {
+        public Collection<Reservation> getReservations() {
             return reservations;
         }
     }

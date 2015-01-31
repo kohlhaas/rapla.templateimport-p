@@ -31,7 +31,7 @@ public class ImportTemplatePlugin  implements PluginDescriptor<ClientServiceCont
         if ( !config.getAttributeAsBoolean("enabled", ENABLE_BY_DEFAULT) )
         	return;
 
-        container.addContainerProvidedComponent( RESOURCE_FILE, I18nBundleImpl.class,I18nBundleImpl.createConfig( RESOURCE_FILE.getId() ) );
+        container.addResourceFile( RESOURCE_FILE );
         container.addContainerProvidedComponent( RaplaClientExtensionPoints.IMPORT_MENU_EXTENSION_POINT, ImportTemplateMenu.class);
     }
 

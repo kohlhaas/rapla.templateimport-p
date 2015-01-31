@@ -27,7 +27,7 @@ public class ImportTemplateServerPlugin  implements PluginDescriptor<ServerServi
         if ( !config.getAttributeAsBoolean("enabled", ImportTemplatePlugin.ENABLE_BY_DEFAULT) )
         	return;
 
-        container.addContainerProvidedComponent( ImportTemplatePlugin.RESOURCE_FILE, I18nBundleImpl.class,I18nBundleImpl.createConfig( ImportTemplatePlugin.RESOURCE_FILE.getId() ) );
+        container.addResourceFile( ImportTemplatePlugin.RESOURCE_FILE);
         container.addRemoteMethodFactory(TemplateImport.class,RaplaTemplateImport.class);
     }
 
