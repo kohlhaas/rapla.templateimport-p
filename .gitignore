@@ -1,2 +1,4 @@
 /eclipse-build
 /build
+/target/
+/.apt_generated/
